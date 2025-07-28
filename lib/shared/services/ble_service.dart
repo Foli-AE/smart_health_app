@@ -41,7 +41,7 @@ class BLEService {
   DeviceConnectionStatus _connectionStatus = DeviceConnectionStatus.disconnected;
   bool _isScanning = false;
   bool _isConnecting = false;
-  List<BluetoothDevice> _discoveredDevices = [];
+  final List<BluetoothDevice> _discoveredDevices = [];
 
   // Getters
   Stream<VitalSigns> get vitalSignsStream => _vitalSignsController.stream;
@@ -113,7 +113,7 @@ class BLEService {
       Timer.periodic(const Duration(seconds: 5), (timer) async {
         if (_connectedDevice != null) {
           try {
-            final devices = await FlutterBluePlus.connectedDevices;
+            final devices = FlutterBluePlus.connectedDevices;
             if (!devices.contains(_connectedDevice)) {
               _handleDeviceDisconnection();
               timer.cancel();
@@ -128,7 +128,7 @@ class BLEService {
     } catch (e) {
       _statusMessageController.add('❌ Error initializing BLE: $e');
       _updateConnectionStatus(DeviceConnectionStatus.error);
-      throw e;
+      rethrow;
     }
   }
 
@@ -176,8 +176,8 @@ class BLEService {
             
             // Check if this is our target device
             if (result.device.name == _deviceName || 
-                result.device.name?.contains('ESP32') == true ||
-                result.device.name?.contains('Maternal') == true) {
+                result.device.name.contains('ESP32') == true ||
+                result.device.name.contains('Maternal') == true) {
               _statusMessageController.add('🎯 Target ESP32 device found: ${result.device.name}');
               _stopScan();
               _connectToDevice(result.device);
@@ -195,7 +195,7 @@ class BLEService {
       _statusMessageController.add('❌ Scan error: $e');
       _isScanning = false;
       _updateConnectionStatus(DeviceConnectionStatus.error);
-      throw e;
+      rethrow;
     }
   }
 

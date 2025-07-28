@@ -122,7 +122,7 @@ class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateM
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(color: AppColors.primary),
+          const CircularProgressIndicator(color: AppColors.primary),
           const SizedBox(height: AppTheme.spacingM),
           Text(
             'Loading your health data...',
@@ -650,7 +650,7 @@ class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateM
   void _exportData() {
     // TODO: Implement data export functionality
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('Export functionality coming soon!'),
         backgroundColor: AppColors.primary,
       ),

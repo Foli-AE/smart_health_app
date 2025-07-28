@@ -164,7 +164,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Amina Mensah',
+                  'Foli Ezekiel',
                   style: AppTypography.headlineMedium.copyWith(
                     color: AppColors.textInverse,
                     fontWeight: FontWeight.bold,

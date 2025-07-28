@@ -16,7 +16,7 @@ class FirebaseTestScreen extends ConsumerStatefulWidget {
 class _FirebaseTestScreenState extends ConsumerState<FirebaseTestScreen> {
   bool _isLoading = false;
   Map<String, dynamic> _testResults = {};
-  Map<String, dynamic> _realtimeData = {};
+  final Map<String, dynamic> _realtimeData = {};
 
   @override
   void initState() {

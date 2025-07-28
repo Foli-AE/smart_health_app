@@ -112,7 +112,7 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(color: AppColors.primary),
+          const CircularProgressIndicator(color: AppColors.primary),
           const SizedBox(height: AppTheme.spacingM),
           Text(
             'Loading contacts...',
@@ -165,7 +165,7 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
       ),
       child: Column(
         children: [
-          Icon(
+          const Icon(
             Icons.emergency,
             size: 48,
             color: AppColors.critical,
@@ -203,7 +203,7 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.warning_rounded,
             color: AppColors.warning,
             size: 24,
@@ -449,7 +449,7 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
         children: [
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.info_outline,
                 color: AppColors.warning,
                 size: 20,
@@ -482,7 +482,7 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
       child: Card(
         elevation: 2,
         color: AppColors.surface,
-        shape: RoundedRectangleBorder(
+        shape: const RoundedRectangleBorder(
           borderRadius: AppTheme.mediumRadius,
         ),
         child: InkWell(
@@ -529,7 +529,7 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
                             Container(
                               width: 8,
                               height: 8,
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 color: AppColors.success,
                                 shape: BoxShape.circle,
                               ),
@@ -593,7 +593,7 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.emergency,
                 size: 24,
               ),
@@ -649,19 +649,19 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Emergency Call'),
+        title: const Text('Emergency Call'),
         content: Text('Call ${contact.name} immediately?\n\nYour current location and vital signs will be shared.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.critical,
             ),
-            child: Text('Call Now'),
+            child: const Text('Call Now'),
           ),
         ],
       ),
@@ -696,7 +696,7 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
     return Container(
       margin: const EdgeInsets.all(AppTheme.spacingM),
       padding: const EdgeInsets.all(AppTheme.spacingL),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.surface,
         borderRadius: AppTheme.largeRadius,
       ),
@@ -764,7 +764,7 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
                 child: ElevatedButton.icon(
                   onPressed: () => _makeCall(contact),
                   icon: Icon(PhosphorIcons.phone()),
-                  label: Text('Call'),
+                  label: const Text('Call'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.success,
                   ),
@@ -776,7 +776,7 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
                   child: OutlinedButton.icon(
                     onPressed: () => _sendEmail(contact),
                     icon: Icon(PhosphorIcons.envelope()),
-                    label: Text('Email'),
+                    label: const Text('Email'),
                   ),
                 ),
               ],
@@ -822,14 +822,14 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Row(
+        title: const Row(
           children: [
             Icon(Icons.emergency, color: AppColors.critical),
-            const SizedBox(width: AppTheme.spacingS),
+            SizedBox(width: AppTheme.spacingS),
             Text('Emergency SOS'),
           ],
         ),
-        content: Text(
+        content: const Text(
           'This will immediately:\n\n'
           '• Call emergency services (999)\n'
           '• Send your location to emergency contacts\n'
@@ -840,7 +840,7 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
@@ -850,7 +850,7 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.critical,
             ),
-            child: Text('ACTIVATE SOS'),
+            child: const Text('ACTIVATE SOS'),
           ),
         ],
       ),
@@ -862,7 +862,7 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
     setState(() => _isEmergencyMode = true);
     
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text(
           'SOS ACTIVATED - Emergency services contacted',
           style: TextStyle(color: AppColors.textInverse),

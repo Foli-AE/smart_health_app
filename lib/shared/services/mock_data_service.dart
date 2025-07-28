@@ -301,8 +301,12 @@ class MockDataService {
   /// Generate normally distributed random values (Box-Muller transform)
   double _generateNormalDistribution() {
     double u = 0, v = 0;
-    while (u == 0) u = _random.nextDouble(); // Converting [0,1) to (0,1)
-    while (v == 0) v = _random.nextDouble();
+    while (u == 0) {
+      u = _random.nextDouble(); // Converting [0,1) to (0,1)
+    }
+    while (v == 0) {
+      v = _random.nextDouble();
+    }
     return sqrt(-2.0 * log(u)) * cos(2 * pi * v);
   }
 
@@ -373,7 +377,7 @@ class MockDataService {
   List<DoctorContact> generateDoctorContacts() {
     return [
       // Primary Obstetrician
-      DoctorContact(
+      const DoctorContact(
         id: 'dr-mensah-001',
         name: 'Dr. Akosua Mensah',
         title: 'Dr.',
@@ -389,21 +393,21 @@ class MockDataService {
         yearsExperience: 15,
         languages: ['English', 'Akan', 'Ewe'],
         workingHours: WorkingHours(
-          mondayStart: const TimeOfDay(hour: 8, minute: 0),
-          mondayEnd: const TimeOfDay(hour: 17, minute: 0),
-          tuesdayStart: const TimeOfDay(hour: 8, minute: 0),
-          tuesdayEnd: const TimeOfDay(hour: 17, minute: 0),
-          wednesdayStart: const TimeOfDay(hour: 8, minute: 0),
-          wednesdayEnd: const TimeOfDay(hour: 17, minute: 0),
-          thursdayStart: const TimeOfDay(hour: 8, minute: 0),
-          thursdayEnd: const TimeOfDay(hour: 17, minute: 0),
-          fridayStart: const TimeOfDay(hour: 8, minute: 0),
-          fridayEnd: const TimeOfDay(hour: 15, minute: 0),
+          mondayStart: TimeOfDay(hour: 8, minute: 0),
+          mondayEnd: TimeOfDay(hour: 17, minute: 0),
+          tuesdayStart: TimeOfDay(hour: 8, minute: 0),
+          tuesdayEnd: TimeOfDay(hour: 17, minute: 0),
+          wednesdayStart: TimeOfDay(hour: 8, minute: 0),
+          wednesdayEnd: TimeOfDay(hour: 17, minute: 0),
+          thursdayStart: TimeOfDay(hour: 8, minute: 0),
+          thursdayEnd: TimeOfDay(hour: 17, minute: 0),
+          fridayStart: TimeOfDay(hour: 8, minute: 0),
+          fridayEnd: TimeOfDay(hour: 15, minute: 0),
         ),
       ),
       
       // Midwife
-      DoctorContact(
+      const DoctorContact(
         id: 'midwife-001',
         name: 'Grace Asante',
         title: 'Midwife',
@@ -423,7 +427,7 @@ class MockDataService {
       ),
 
       // Emergency Contact
-      DoctorContact(
+      const DoctorContact(
         id: 'emergency-001',
         name: 'Ghana Emergency Services',
         title: 'Emergency',
@@ -438,7 +442,7 @@ class MockDataService {
       ),
 
       // Family Contact
-      DoctorContact(
+      const DoctorContact(
         id: 'family-001',
         name: 'Kwame Mensah',
         title: 'Husband',
@@ -450,7 +454,7 @@ class MockDataService {
       ),
 
       // General Doctor
-      DoctorContact(
+      const DoctorContact(
         id: 'dr-boateng-001',
         name: 'Dr. Samuel Boateng',
         title: 'Dr.',
@@ -650,7 +654,7 @@ class MockDataService {
         completedAt: currentWeek >= 28 ? DateTime.now().subtract(Duration(days: (currentWeek - 28) * 7)) : null,
       ),
 
-      PregnancyMilestone(
+      const PregnancyMilestone(
         id: 'milestone-007',
         week: 32,
         title: 'Hospital Bag Preparation',
@@ -659,7 +663,7 @@ class MockDataService {
         isCompleted: false,
       ),
 
-      PregnancyMilestone(
+      const PregnancyMilestone(
         id: 'milestone-008',
         week: 36,
         title: 'Baby is Full Term',
@@ -675,7 +679,7 @@ class MockDataService {
   /// Generate weekly pregnancy updates
   List<WeeklyUpdate> _generateWeeklyUpdates() {
     return [
-      WeeklyUpdate(
+      const WeeklyUpdate(
         id: 'week-28',
         week: 28,
         title: 'Your Baby is Growing Strong',
@@ -699,7 +703,7 @@ class MockDataService {
         ],
       ),
       
-      WeeklyUpdate(
+      const WeeklyUpdate(
         id: 'week-29',
         week: 29,
         title: 'Preparing for the Third Trimester',

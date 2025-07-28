@@ -122,7 +122,7 @@ class _BLETestScreenState extends ConsumerState<BLETestScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          ...devices.take(3).map((device) => _buildDeviceCard(device)).toList(),
+          ...devices.take(3).map((device) => _buildDeviceCard(device)),
           if (devices.length > 3)
             Text(
               '... and ${devices.length - 3} more',
@@ -136,8 +136,8 @@ class _BLETestScreenState extends ConsumerState<BLETestScreen> {
   }
 
   Widget _buildDeviceCard(BluetoothDevice device) {
-    bool isTargetDevice = device.name?.contains('ESP32') == true || 
-                         device.name?.contains('Maternal') == true ||
+    bool isTargetDevice = device.name.contains('ESP32') == true || 
+                         device.name.contains('Maternal') == true ||
                          device.name == 'MaternalGuardian';
     
     return Container(
@@ -389,7 +389,7 @@ class _BLETestScreenState extends ConsumerState<BLETestScreen> {
       ),
       child: Column(
         children: [
-          Icon(Icons.error, color: AppColors.error, size: 32),
+          const Icon(Icons.error, color: AppColors.error, size: 32),
           const SizedBox(height: 8),
           Text(
             'BLE Error',
@@ -498,7 +498,7 @@ class _BLETestScreenState extends ConsumerState<BLETestScreen> {
                   await FlutterBluePlus.turnOn();
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                       content: Text('Please turn on Bluetooth manually in settings'),
                       backgroundColor: AppColors.warning,
                     ),

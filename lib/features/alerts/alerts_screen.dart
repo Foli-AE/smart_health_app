@@ -120,14 +120,14 @@ class _AlertsScreenState extends State<AlertsScreen> with TickerProviderStateMix
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.notifications_active, size: 16),
+                  const Icon(Icons.notifications_active, size: 16),
                   const SizedBox(width: 4),
-                  Text('Alerts'),
+                  const Text('Alerts'),
                   if (_getUnreadCount() > 0) ...[
                     const SizedBox(width: 4),
                     Container(
                       padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: AppColors.critical,
                         shape: BoxShape.circle,
                       ),
@@ -143,8 +143,8 @@ class _AlertsScreenState extends State<AlertsScreen> with TickerProviderStateMix
                 ],
               ),
             ),
-            Tab(text: 'Recommendations'),
-            Tab(text: 'Settings'),
+            const Tab(text: 'Recommendations'),
+            const Tab(text: 'Settings'),
           ],
           labelStyle: AppTypography.labelMedium.copyWith(fontWeight: FontWeight.w600),
           unselectedLabelStyle: AppTypography.labelMedium,
@@ -172,7 +172,7 @@ class _AlertsScreenState extends State<AlertsScreen> with TickerProviderStateMix
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(color: AppColors.primary),
+          const CircularProgressIndicator(color: AppColors.primary),
           const SizedBox(height: AppTheme.spacingM),
           Text(
             'Loading alerts...',
@@ -447,7 +447,7 @@ class _AlertsScreenState extends State<AlertsScreen> with TickerProviderStateMix
       child: Card(
         elevation: 2,
         color: AppColors.surface,
-        shape: RoundedRectangleBorder(
+        shape: const RoundedRectangleBorder(
           borderRadius: AppTheme.mediumRadius,
         ),
         child: InkWell(
@@ -750,7 +750,7 @@ class _AlertsScreenState extends State<AlertsScreen> with TickerProviderStateMix
                 ],
               ),
             ),
-            Icon(
+            const Icon(
               Icons.arrow_forward_ios,
               color: AppColors.textTertiary,
               size: 16,
@@ -795,7 +795,7 @@ class _AlertsScreenState extends State<AlertsScreen> with TickerProviderStateMix
             ),
           ),
           IconButton(
-            icon: Icon(Icons.edit, size: 16),
+            icon: const Icon(Icons.edit, size: 16),
             color: AppColors.textTertiary,
             onPressed: () => _editThreshold(title),
           ),
@@ -923,7 +923,7 @@ class _AlertsScreenState extends State<AlertsScreen> with TickerProviderStateMix
       case AlertType.vitalSigns:
         // Navigate to dashboard or vital details
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Opening vital signs details...'),
             backgroundColor: AppColors.primary,
           ),
@@ -956,7 +956,7 @@ class _AlertsScreenState extends State<AlertsScreen> with TickerProviderStateMix
       builder: (context) => Container(
         margin: const EdgeInsets.all(AppTheme.spacingM),
         padding: const EdgeInsets.all(AppTheme.spacingL),
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: AppColors.surface,
           borderRadius: AppTheme.largeRadius,
         ),
@@ -1054,7 +1054,7 @@ class _AlertsScreenState extends State<AlertsScreen> with TickerProviderStateMix
             
             // Unread filter
             CheckboxListTile(
-              title: Text('Show only unread'),
+              title: const Text('Show only unread'),
               value: _showOnlyUnread,
               onChanged: (value) {
                 setState(() => _showOnlyUnread = value ?? false);
@@ -1079,7 +1079,7 @@ class _AlertsScreenState extends State<AlertsScreen> with TickerProviderStateMix
               },
             )),
             RadioListTile<AlertSeverity?>(
-              title: Text('All Severities'),
+              title: const Text('All Severities'),
               value: null,
               groupValue: _filterSeverity,
               onChanged: (value) {
@@ -1102,7 +1102,7 @@ class _AlertsScreenState extends State<AlertsScreen> with TickerProviderStateMix
 
   void _showAutoCallSettings() {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('Auto-call settings - Coming soon'),
         backgroundColor: AppColors.primary,
       ),
@@ -1111,7 +1111,7 @@ class _AlertsScreenState extends State<AlertsScreen> with TickerProviderStateMix
 
   void _showLocationSettings() {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('Location sharing settings - Coming soon'),
         backgroundColor: AppColors.primary,
       ),

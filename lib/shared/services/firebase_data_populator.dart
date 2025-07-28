@@ -159,7 +159,7 @@ class FirebaseDataPopulator {
     final batch = _firestore.batch();
 
     final contacts = [
-      DoctorContact(
+      const DoctorContact(
         id: '1',
         name: 'Dr. Sarah Johnson',
         title: 'Obstetrician',
@@ -174,7 +174,7 @@ class FirebaseDataPopulator {
         yearsExperience: 12,
         languages: ['English', 'Twi'],
       ),
-      DoctorContact(
+      const DoctorContact(
         id: '2',
         name: 'Nurse Grace Mensah',
         title: 'Midwife',
@@ -189,7 +189,7 @@ class FirebaseDataPopulator {
         yearsExperience: 8,
         languages: ['English', 'Twi', 'Ga'],
       ),
-      DoctorContact(
+      const DoctorContact(
         id: '3',
         name: 'Dr. Kwame Asante',
         title: 'Pediatrician',

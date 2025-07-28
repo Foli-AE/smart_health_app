@@ -230,3 +230,7 @@ lib/
 **NB**: THE UI IS SET, when replacing all dummy, static, and hard coded text, DO NOT CHANGE the UI for the app, JUST FOLLOW WHAT EXISTS AND REPLACE THE STATICS WITH THE DYNAMICS
 
 The app now demonstrates the perfect balance of **world-class engineering**, **IoT integration**, and **exceptional user experience** - exactly what the pregnant-app-rule demanded. 
+
+#App name: marteguard
+# Voice assistant(Walkthrough pending)
+@

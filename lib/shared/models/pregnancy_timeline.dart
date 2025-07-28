@@ -352,11 +352,11 @@ extension PregnancyTrimesterExtension on PregnancyTrimester {
   IntRange get weekRange {
     switch (this) {
       case PregnancyTrimester.first:
-        return IntRange(1, 12);
+        return const IntRange(1, 12);
       case PregnancyTrimester.second:
-        return IntRange(13, 26);
+        return const IntRange(13, 26);
       case PregnancyTrimester.third:
-        return IntRange(27, 40);
+        return const IntRange(27, 40);
     }
   }
 }

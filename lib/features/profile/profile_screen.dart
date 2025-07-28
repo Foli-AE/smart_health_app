@@ -106,7 +106,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(color: AppColors.primary),
+          const CircularProgressIndicator(color: AppColors.primary),
           const SizedBox(height: AppTheme.spacingM),
           Text(
             'Loading profile...',
@@ -154,7 +154,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
 
   Widget _buildPregnancyTab() {
     if (_pregnancyTimeline == null) {
-      return Center(child: Text('Loading pregnancy data...'));
+      return const Center(child: Text('Loading pregnancy data...'));
     }
 
     return SingleChildScrollView(
@@ -265,7 +265,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
                   color: AppColors.primary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.person_rounded,
                   size: 60,
                   color: AppColors.primary,
@@ -284,7 +284,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
                       width: 2,
                     ),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.edit,
                     size: 16,
                     color: AppColors.textInverse,
@@ -298,7 +298,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
           
           // Name and Title
           Text(
-            'Amina Mensah',
+            'Foli Ezekiel',
             style: AppTypography.titleLarge.copyWith(
               fontWeight: FontWeight.bold,
             ),
@@ -326,7 +326,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
+                const Icon(
                   Icons.pregnant_woman,
                   color: AppColors.heartRate,
                   size: 16,
@@ -523,7 +523,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
             ),
           ),
           IconButton(
-            icon: Icon(Icons.edit, size: 16),
+            icon: const Icon(Icons.edit, size: 16),
             color: AppColors.textTertiary,
             onPressed: () => _editInfo(label),
           ),
@@ -533,7 +533,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
   }
 
   Widget _buildCurrentWeekCard() {
-    if (_pregnancyTimeline == null) return SizedBox.shrink();
+    if (_pregnancyTimeline == null) return const SizedBox.shrink();
     
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingL),
@@ -613,7 +613,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
                 const SizedBox(height: AppTheme.spacingS),
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.child_care,
                       color: AppColors.heartRate,
                       size: 16,
@@ -775,7 +775,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
   }
 
   Widget _buildMilestones() {
-    if (_pregnancyTimeline == null) return SizedBox.shrink();
+    if (_pregnancyTimeline == null) return const SizedBox.shrink();
     
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingM),
@@ -802,7 +802,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
           if (_pregnancyTimeline!.milestones.length > 5)
             TextButton(
               onPressed: () => _showAllMilestones(),
-              child: Text('View All Milestones'),
+              child: const Text('View All Milestones'),
             ),
         ],
       ),
@@ -860,7 +860,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
                     ),
                     if (milestone.isCompleted) ...[
                       const SizedBox(width: 8),
-                      Icon(
+                      const Icon(
                         Icons.verified,
                         size: 12,
                         color: AppColors.success,
@@ -1011,7 +1011,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
               ),
               TextButton(
                 onPressed: () => _showAllRecommendations(),
-                child: Text('View All'),
+                child: const Text('View All'),
               ),
             ],
           ),
@@ -1075,7 +1075,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
               ],
             ),
           ),
-          Icon(
+          const Icon(
             Icons.arrow_forward_ios,
             color: AppColors.textTertiary,
             size: 16,
@@ -1100,7 +1100,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
         children: [
           Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.emergency,
                 color: AppColors.critical,
                 size: 24,
@@ -1123,7 +1123,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
                 child: ElevatedButton.icon(
                   onPressed: () => _navigateToCallDoctor(),
                   icon: Icon(PhosphorIcons.phone()),
-                  label: Text('Call Doctor'),
+                  label: const Text('Call Doctor'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.critical,
                     foregroundColor: AppColors.textInverse,
@@ -1134,11 +1134,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () => _callEmergencyServices(),
-                  icon: Icon(Icons.local_hospital),
-                  label: Text('Emergency'),
+                  icon: const Icon(Icons.local_hospital),
+                  label: const Text('Emergency'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.critical,
-                    side: BorderSide(color: AppColors.critical),
+                    side: const BorderSide(color: AppColors.critical),
                   ),
                 ),
               ),
@@ -1396,7 +1396,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
                 ],
               ),
             ),
-            Icon(
+            const Icon(
               Icons.arrow_forward_ios,
               color: AppColors.textTertiary,
               size: 16,
@@ -1451,7 +1451,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.textInverse,
                     padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
-                    shape: RoundedRectangleBorder(
+                    shape: const RoundedRectangleBorder(
                       borderRadius: AppTheme.mediumRadius,
                     ),
                   ),
@@ -1474,7 +1474,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
                     backgroundColor: AppColors.secondary,
                     foregroundColor: AppColors.textInverse,
                     padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
-                    shape: RoundedRectangleBorder(
+                    shape: const RoundedRectangleBorder(
                       borderRadius: AppTheme.mediumRadius,
                     ),
                   ),
@@ -1497,7 +1497,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
 
   void _showAppointments() {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('Appointments feature - Coming soon'),
         backgroundColor: AppColors.primary,
       ),
@@ -1506,7 +1506,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
 
   void _shareHealthData() {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('Health data sharing - Coming soon'),
         backgroundColor: AppColors.primary,
       ),
@@ -1524,7 +1524,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
 
   void _showAllMilestones() {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('All milestones view - Coming soon'),
         backgroundColor: AppColors.primary,
       ),
@@ -1533,7 +1533,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
 
   void _showAllRecommendations() {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('All recommendations view - Coming soon'),
         backgroundColor: AppColors.primary,
       ),
@@ -1544,12 +1544,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Emergency Call'),
-        content: Text('Call emergency services (999) immediately?'),
+        title: const Text('Emergency Call'),
+        content: const Text('Call emergency services (999) immediately?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1559,7 +1559,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.critical,
             ),
-            child: Text('Call 999'),
+            child: const Text('Call 999'),
           ),
         ],
       ),

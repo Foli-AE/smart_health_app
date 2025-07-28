@@ -158,14 +158,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         Container(
           width: 120,
           height: 120,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             shape: BoxShape.circle,
             gradient: AppColors.primaryGradient,
             boxShadow: [
               BoxShadow(
                 color: AppColors.shadowMedium,
                 blurRadius: 8,
-                offset: const Offset(0, 4),
+                offset: Offset(0, 4),
               ),
             ],
           ),

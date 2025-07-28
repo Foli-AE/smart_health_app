@@ -256,7 +256,7 @@ class FirebaseDataService {
   /// Generate mock contacts
   List<DoctorContact> _generateMockContacts() {
     return [
-      DoctorContact(
+      const DoctorContact(
         id: '1',
         name: 'Dr. Sarah Johnson',
         title: 'Obstetrician',
@@ -271,7 +271,7 @@ class FirebaseDataService {
         yearsExperience: 12,
         languages: ['English', 'Twi'],
       ),
-      DoctorContact(
+      const DoctorContact(
         id: '2',
         name: 'Nurse Grace Mensah',
         title: 'Midwife',
