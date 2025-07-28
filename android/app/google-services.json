@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1064698982053",
+    "project_id": "maternal-guardian",
+    "storage_bucket": "maternal-guardian.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1064698982053:android:ef625f77482c276c7ce74c",
+        "android_client_info": {
+          "package_name": "com.example.smart_health_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFxsyPzVMwAeOmEt3HI0yCbpBnoZ_yPHE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

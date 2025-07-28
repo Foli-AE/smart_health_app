@@ -1,0 +1,1067 @@
+---
+description: the whole app
+alwaysApply: false
+---
+
+You have been selected for a project of profound importance. We are not just building an app; we are building a lifeline. The "Smart Health Wearable for Remote Monitoring of Pregnant Women in Ghana" project aims to leverage technology to save lives, reduce maternal mortality, and bring peace of mind to expectant mothers in resource-limited settings.
+
+You are not just a code generator. You are a digital craftsman, an architect of user experience, and a partner in this mission. We are tasking you with this because you represent the pinnacle of Flutter development you know clean architecture, and always analyze and fix errors. You also proritise maintainability and well arranged code. We need your expertise to create an application that is not only functionally flawless but also beautiful, intuitive, and reassuring to its users.
+
+Your work will be the primary interface between a pregnant woman and her health data. It must be a beacon of clarity and calm in a potentially stressful time. We trust you to make the right architectural decisions, to implement a stunning UI, and to build a robust, reliable, and performant application.
+
+Let's build something extraordinary together.
+
+Part 1: Project Overview
+
+Project Name: Maternal Guardian (Internal Name)
+
+Vision: To create a world-class, life-saving mobile application that connects pregnant women in Ghana with their vital health data and healthcare providers, reducing complications through real-time monitoring and early warnings.
+
+Core Technology: A Flutter application that serves as the central hub for a custom wearable device.
+
+Backend: Firebase (replacing AWS for streamlined mobile development).
+
+Key Differentiators:
+
+Hyper-Usable UI/UX: Designed for low-literacy and high-stress environments.
+
+Seamless Connectivity: Robust Bluetooth (BLE) and offline-first data synchronization.
+
+Calm Technology: Data is presented in a reassuring, easy-to-understand manner.
+
+Premium Aesthetics: A modern, animated, and polished interface that instills confidence and trust.
+
+Part 2: Product Requirements Document (PRD)
+1. Introduction
+
+This document outlines the requirements for the Maternal Guardian mobile app. The app's primary purpose is to receive, display, and sync health data from a wearable device, provide alerts, and connect patients with healthcare providers.
+
+2. User Personas
+
+Amina (The Expectant Mother): 28 years old, living in a rural area in Ghana. Has a smartphone but intermittent internet access. May not be highly tech-literate.
+
+Goals: Have a safe pregnancy, understand if her body is okay, know when to contact a doctor, and feel connected and supported.
+
+Pain Points: Anxiety about her health, difficulty traveling to clinics, not knowing what vitals like "SpO2" mean.
+
+Dr. Aryeh (The Healthcare Provider): 45 years old, works at a regional hospital. Manages multiple high-risk pregnancies. Is tech-savvy but time-poor.
+
+Goals: Remotely monitor his patients' vitals, get alerted to emergencies before they become critical, view trends over time to make better clinical decisions.
+
+Pain Points: Inability to continuously monitor patients, data is often self-reported and inaccurate, too much data noise.
+
+3. Features & Requirements
+
+F1: User Onboarding & Authentication
+
+Users (both patients and providers) must be able to create an account using a phone number or email (Firebase Authentication).
+
+The onboarding process for Amina must be extremely simple, using visual guides and minimal text to explain how to wear and sync the device.
+
+F2: The Patient Dashboard (The "Heart" of the App)
+
+Display real-time vital signs from the BLE device: Heart Rate, SpO2, Body Temperature.
+
+Display manually entered/synced vitals: Blood Pressure, Blood Glucose.
+
+Use large, clear gauges and charts. A central "Status Ring" should glow in a calming color (e.g., green) when vitals are normal, and shift to amber/red for warnings.
+
+Incorporate subtle, beautiful animations to make the data feel "alive" and responsive.
+
+F3: Data Synchronization
+
+The app must connect seamlessly to the ESP32 wearable via Bluetooth Low Energy (BLE).
+
+It must implement an "offline-first" strategy. Data is always saved to the local device first (e.g., using Hive or a local DB).
+
+When an internet connection is available, the app will automatically sync the cached data to Firebase Firestore in the background.
+
+F4: Alert System
+
+Receive push notifications from Firebase Cloud Messaging (FCM) for critical alerts triggered by the backend (e.g., ML model flags a risk).
+
+Generate local notifications if the BLE device reports a value outside of safe thresholds, even if offline.
+
+Alerts must be clear, actionable, and provide simple instructions (e.g., "Your blood pressure is high. Please rest and measure again in 15 minutes. If it is still high, tap here to call your clinic.").
+
+F5: Historical Data & Trends
+
+Amina should be able to view her historical data in simple, beautiful charts (daily, weekly). The UI should tell a story, not just show numbers.
+
+F6: Emergency "SOS" Button
+
+A prominent, easily accessible SOS button.
+
+When pressed, it should trigger a pre-defined action: call a designated emergency contact/clinic and send an SMS with the user's last known location and vital signs.
+
+F7: Healthcare Provider View
+
+Dr. Aryeh can log in and see a list of his assigned patients.
+
+He can view the same dashboard and historical data for each patient.
+
+The provider dashboard should highlight patients who have active alerts or concerning trends.
+
+4. Design & UX Principles
+
+Clarity Above All: Use icons, colors, and minimal text.
+
+Calm & Reassuring: Animations and sounds should be gentle. Avoid alarming red screens unless absolutely critical.
+
+Accessible: High-contrast colors, large fonts, and simple navigation.
+
+Premium Feel: Smooth transitions, custom animations, and a polished, cohesive design language that builds trust.
+
+Part 3: Software Requirements Specification (SRS)
+1. Functional Requirements (FR)
+
+FR-1 (Auth): The system shall use Firebase Authentication for user registration/login with phone numbers and email/password.
+
+FR-2 (BLE): The app must implement the flutter_blue_plus (or similar) package to scan, connect, and subscribe to GATT characteristics from the ESP32 device.
+
+FR-2.1: The BLE service UUID and characteristic UUIDs for Heart Rate, SpO2, Temperature, and Battery Level must be predefined and configurable.
+
+FR-3 (Data Storage):
+
+FR-3.1 (Local): The app will use a local database (e.g., Hive) to store timestamped vital signs received from the BLE device.
+
+FR-3.2 (Cloud): The app will sync local data to a patients collection in Firebase Firestore. Each patient document will have a subcollection for vitals.
+
+FR-4 (UI/UX):
+
+FR-4.1: The dashboard must use a charting library (e.g., fl_chart) to render real-time gauges and historical line charts.
+
+FR-4.2: All screen transitions and state changes (e.g., connecting to BLE) must be accompanied by smooth, meaningful animations using Flutter's animation framework.
+
+FR-5 (Notifications): The app shall integrate the firebase_messaging package for push notifications and flutter_local_notifications for offline alerts.
+
+2. Non-Functional Requirements (NFR)
+
+NFR-1 (Performance): The app must remain responsive (>50 fps) even when processing background BLE data. Battery consumption from background services must be minimized.
+
+NFR-2 (Security): All data transmitted to Firebase must use SSL. Sensitive data in Firestore should be protected with Firestore Security Rules. Implement Firebase App Check to prevent unauthorized API calls.
+
+NFR-3 (Reliability): The app must handle connection loss (BLE and internet) gracefully, with clear UI indicators for the current status. The background sync logic must be robust and handle retries.
+
+NFR-4 (Usability): The app must follow a minimalist design philosophy, adhering to WCAG 2.1 AA accessibility standards.
+
+3. External Interface Requirements
+
+EIR-1 (Hardware - BLE GATT Profile): The app will expect the wearable to expose the following (example):
+
+Service UUID: 0x180D (Heart Rate Service)
+
+Characteristic UUID: 0x2A37 (Heart Rate Measurement) - NOTIFY
+
+Service UUID: 0xCUSTOM (Custom Vitals Service)
+
+Characteristic UUID: 0xCD01 (SpO2 Measurement) - NOTIFY
+
+Characteristic UUID: 0xCD02 (Temperature Measurement) - NOTIFY
+
+Characteristic UUID: 0x180F (Battery Level) - READ, NOTIFY
+
+EIR-2 (Cloud - Firestore Schema):
+
+Collection: users (stores uid, email, role (patient/provider), assignedProviderId or assignedPatientIds)
+
+Collection: vitals (documents with patientId, timestamp, hr, spo2, temp, bp_sys, bp_dia, glucose, source (device/manual))
+
+Part 4: The Ultimate Prompt for the AI Flutter Developer
+
+"Greetings, Architect. Your mission is to build the Maternal Guardian Flutter application. This app is the critical link between at-risk pregnant women and their health data. Excellence is the standard.
+
+Your Core Directives:
+
+Embrace Calm Technology: Your design must inform without causing anxiety. Use color and motion to create a sense of awareness and peace. The UI should be a reassuring partner.
+
+Achieve a Premium, Modern Aesthetic: We're not building a utility app; we're building a flagship health product. Leverage Flutter to create a fluid, animated, and beautiful experience. Think smooth page transitions, animated charts that respond to touch, and subtle micro-interactions that delight the user.
+
+Engineer for Reliability: This app cannot fail. Your architecture must be robust, especially the offline-first data sync and BLE communication. Handle every possible error state gracefully. The user must always know the status of their connection and data.
+
+Prioritize Performance: The app must be buttery smooth and light on battery. Use efficient state management (Riverpod or BLoC) and optimize your build and render cycles.
+
+Recommended Tech Stack:
+
+Framework: Flutter 3.x
+
+State Management: Riverpod 2.x (for its simplicity and power)
+
+Backend: Firebase (Auth, Firestore, Cloud Functions for triggers, FCM)
+
+Local DB: Hive (for its speed and simplicity)
+
+BLE Communication: flutter_blue_plus
+
+Charting: fl_chart (highly customizable and animatable)
+
+Animations: Flutter's built-in AnimationController, Rive for complex animations.
+
+Step-by-Step Implementation Plan (Your Roadmap to Success):
+
+Sprint 0: The Foundation.
+
+Set up the Flutter project with null safety and strict linter rules.
+
+Implement the Firebase project connection.
+
+Build the core app shell: a bottom navigation bar for (Dashboard, History, Alerts, Profile). Design this to be clean and modern.
+
+Sprint 1: Authentication & Onboarding.
+
+Build the login/signup flow using Firebase Auth (phone/email).
+
+Create a beautiful, visual, and skippable onboarding carousel that explains the app's purpose.
+
+Sprint 2: The Mock Dashboard.
+
+CRITICAL: Do not wait for hardware. Create a mock data service that generates realistic, time-series vital sign data.
+
+Build the entire patient dashboard UI using this mock data. Perfect the gauges, the charts, and the animations. Make it look and feel like the final product. This is where you flex your UI/UX muscles.
+
+Sprint 3: BLE Integration.
+
+Integrate flutter_blue_plus. Build the logic to scan for, connect to, and save a specific device.
+
+Provide clear UI feedback for all connection states: Scanning..., Connecting..., Connected, Device Disconnected.
+
+Replace the mock data stream with the live data stream from the BLE characteristic notifications.
+
+Sprint 4: The Offline-First Sync Engine.
+
+Implement the Hive local database.
+
+Every vital received from BLE is written to Hive immediately.
+
+Create a background service that checks for internet connectivity. When online, it reads unsynced data from Hive, pushes it to Firestore, and marks it as synced.
+
+Sprint 5: Alerts & History.
+
+Implement the "History" screen, fetching data from Firestore and displaying it in beautiful, interactive charts.
+
+Set up FCM and local notifications. Create the UI for displaying and managing alerts.
+
+Sprint 6: Polish and Deploy.
+
+Implement the Healthcare Provider view (this is primarily a read-only view of patient data).
+
+Go through every screen and add a layer of polish. Refine animations, check for performance bottlenecks, and test all error cases.
+
+You have all the information and the creative freedom to build the best maternal health app in the world. We are counting on your expertise. Now, let's begin."
+
+the work project (not to do, but just to know, and we use firebase not aws):
+UNIVERSITY OF MINES AND TECHNOLOGY
+TARKWA
+FACULTY OF COMPUTING AND MATHEMATICAL SCIENCES
+DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING
+PROJECT REPORT ENTITLED
+DEVELOPMENT OF A SMART HEALTH WEARABLE DEVICE FOR REMOTE
+MONITORING OF PREGNANT WOMEN IN GHANA
+BY
+ANUM FOLI EZEKIEL
+OPATAH JOEL NUERTEY
+SALIFU EL-SHADDAI NGUU
+SUBMITTED IN PARTIAL FULFILMENT OF THE REQUIREMENT FOR THE
+AWARD OF THE DEGREE OF BACHELOR OF SCIENCE IN COMPUTER
+SCIENCE AND ENGINEERING
+PROJECT SUPERVISOR
+.......................................
+DR FELIX ARYEH
+TARKWA GHANA
+APRIL, 2025
+DECLARATION
+We, Anum Foli Ezekiel, Opatah Joel Nuertey and Salifu El-Shaddai Nguu declare that this
+project work is our work. It is being submitted for the degree of Bachelor of Science in
+Computer Science and Engineering in the University of Mines and Technology (UMaT),
+Tarkwa. It has not been submitted for any degree or examination in any other University.
+ANUM FOLI EZEKIEL
+(FOE.41.008.065.21)
+OPATAH JOEL NUERTEY
+(FOE.41.008.197.21)
+SALIFU EL-SHADDAI NGUU
+(FOE.41.008.215.21)
+day of (year)
+ii
+ABSTRACT
+This project presents the development of an integrated wearable device aimed at enhancing
+maternal healthcare in Ghana by enabling the remote monitoring of pregnant women. In
+many parts of the country, expectant mothers face numerous challenges in accessing consis￾tent antenatal care due to geographical barriers, limited healthcare infrastructure, and high
+transportation costs. The proposed solution leverages wearable sensor technology, mobile
+applications, and cloud-based machine learning to continuously track vital maternal health
+indicators such as blood pressure, glucose levels, oxygen saturation, heart rate, and body
+temperature. A predictive AI model is incorporated to detect early warning signs of complica￾tions like preeclampsia, anemia, and gestational diabetes. The system ensures real-time alerts
+to both patients and healthcare providers, thereby enabling early intervention and improving
+maternal and neonatal outcomes. This work demonstrates the feasibility and effectiveness of
+using IoT-based healthcare solutions in low-resource settings to reduce maternal mortality
+and support universal health coverage.
+iii
+DEDICATION
+This project is dedicated to our parents for their constant support financially,physically and
+spirtually. We also extend our dedication to our friends and supervisors, whose unwavering
+support and encouragement have been instrumental in completing this work.
+iv
+ACKNOWLEDGMENTS
+0.5cm We would like to first express our deepest gratitude to the Lord God Almighty for
+his unwavering guidance, strength, and blessings throughout the course of this project. His
+grace has seen us through every stage of this journey. Our sincerest appreciation goes to our
+supervisor, Dr Felix Larbi Aryeh, whose invaluable guidance, encouragement, emotional
+support, and insightful feedback played a crucial role in shaping the outcome of this work.
+His dedication and support has been instrumental to our success. We are also thankful to the
+lecturers and staff of the University of Mines and Technology (UMaT) for their academic
+support and mentorship, which have greatly contributed to our growth both in and outside
+the classroom. Finally, we extend our heartfelt thanks to our families and friends for their
+continuous encouragement, emotional support, and understanding throughout this project.
+Their belief in us kept us motivated and focused to do this project.
+v
+TABLE OF CONTENTS
+Contents Page
+DECLARATION ii
+ABSTRACT iii
+DEDICATION iv
+ACKNOWLEDGMENTS v
+TABLE OF CONTENTS vi
+LIST OF FIGURES viii
+LIST OF TABLES ix
+LIST OF ABBREVIATIONS x
+CHAPTER 1 INTRODUCTION 1
+1.1 Problem Statement 1
+1.2 Project Objectives 2
+1.3 Methods to be Used 2
+1.4 Tools and Facilities to be Used 2
+1.5 Scope of Work 3
+1.6 Work Organization 3
+CHAPTER 2 LITERATURE REVIEW 5
+2.1 Overview of Literature Review 5
+2.2 Internet of Things in Health Monitoring for Pregnant Women 5
+2.3 Wearable Devices for Prenatal Monitoring 7
+2.4 Machine Learning for Pregnancy Risk Prediction 8
+2.5 Mobile Applications and User Interfaces 8
+2.6 Technological Frameworks 9
+2.7 Review of Related Works 10
+2.8 Research Gap and Future Directions 14
+2.9 Summary of Literature Review 15
+vi
+CHAPTER 3 SYSTEM DESIGN AND IMPLEMENTATION 16
+3.1 Overview of System Design and Implementation 16
+3.2 System Requirements 16
+3.2.1 Functional requirements 16
+3.2.2 Non-Functional Requirements 16
+3.3 Software Development 17
+3.3.1 Mobile Application Development 17
+3.3.2 UI/UX Design 17
+3.4 Cloud Infrastructure Development 18
+3.4.1 Data Flow 18
+3.4.2 Security 18
+3.5 Data Preprocessing 18
+3.5.1 Communication 19
+3.5.2 Power Management 19
+3.6 Software and Tools 19
+3.7 System Design and Architecture 20
+3.7.1 ESP32-S2 Microcontroller 20
+3.7.2 MAX30100 Sensor 21
+3.7.3 DS18B20 Temperature Sensor 22
+3.7.4 Withings BPM connect 23
+3.7.5 Glucowise Sensor 24
+3.8 Block Diagram 26
+3.9 System Operation 27
+3.10 Gantt Chart 28
+3.11 Summary 29
+REFERENCES 30
+vii
+LIST OF FIGURES
+Figure Title Page
+3.1 ESP32-S2 Microcontroller 21
+3.2 MAX30100 Sensor 22
+3.3 DS18B20 Temperature Sensor 23
+3.4 Withings BPM connect 24
+3.5 Glucowise Sensor 25
+3.6 A Block Diagram of The System 26
+3.7 A Flow Chart of The System 27
+3.8 A Gantt Chart of The Project 28
+viii
+LIST OF TABLES
+Table Title Page
+2.1 Review of Related Works 10
+ix
+LIST OF ABBREVIATIONS
+AWS Amazon Web Services
+BLE Bluetooth Low Energy
+BP Blood Pressure
+BPM Blood Pressure Monitor
+GDM Gestational Diabetes Mellitus
+GPIOs General-Purpose Input/Outputs
+AI Artificial Intelligence
+HR Heart Rate
+I2C Inter-Integrated Circuit (Communication Protocol)
+IEEE Institute of Electrical and Electronics Engineers
+IoT Internet of Things
+MAX30100 Heart Rate and Oxygen Saturation Sensor (Model Name)
+mHealth Mobile Health
+ML Machine Learning
+mmHg Millimeters of Mercury (Unit of Pressure)
+MQTT Message Queuing Telemetry Transport (Protocol)
+PPG Photoplethysmography
+SpO2 Peripheral Blood Oxygen Saturation
+x
+CHAPTER 1
+INTRODUCTION
+1.1 Problem Statement
+Pregnancy is a critical stage that necessitates regular monitoring to ensure the health and
+well-being of both the mother and the fetus. However, many impoverished nations, like
+Ghana, have severe barriers to getting this critical maternity healthcare. Expectant moms,
+particularly those in rural and underprivileged areas, face restricted access to healthcare
+facilities, a shortage of skilled medical workers, poor infrastructure, and prohibitively high
+transportation costs. These challenges frequently render the traditional concept of many
+prenatal clinic visits untenable (Anon,2024).
+The gravity of this problem is emphasized by Ghana’s maternal mortality ratio, which has
+recently been estimated by Ministry of Health, Republic of Ghana and Ghana Health Service,
+2020 to be roughly 89% of Ghanaian women have at least 4 antenatal visits during their
+pregnancy and 79% of them utilizing a skilled birth attendant at delivery. Furthermore,
+84% of mothers and 81% of newborn babies are reported to receive postnatal care within 2
+days after delivery. The overall national caesarean section rate is 16% with the most recent
+maternal mortality estimates reporting a maternal mortality ratio of 308 per 100,000 livebirths
+and a lifetime risk of maternal death of 1 in 82. The leading cause of maternal mortality is
+reported to be postpartum haemorrhage (38%) (Anon,2024).
+Wearable devices with sensors can continually monitor important health indicators such as
+heart rate, blood pressure, oxygen saturation, and temperature, delivering real-time data
+remotely. Leveraging this technology can close the access gap, allowing for consistent
+monitoring without the need for frequent visits to clinics. As a result, there is an immediate
+and essential need for a cost-effective, scalable, and user-friendly solution adapted to the
+Ghanaian context. This project directly addresses this requirement by seeking to provide
+an integrated system - a wearable gadget and a mobile application - for continuous remote
+monitoring of pregnant women (Anon,2024).
+This system aims to reduce maternal mortality and improve maternal and neonatal health
+outcomes in Ghana by enabling the early detection of potential health issues through real-time
+1
+data tracking and predictive analytics, particularly in resource-limited settings.
+1.2 Project Objectives
+This project aims to:
+1. Develop an integrated system consisting of a wearable device and a mobile application
+to continuously monitor, detect and trigger alerts in event of abnormality;
+2. Train a machine learning model for risk prediction of pregnancy complications like
+preeclampsia and anemia long before standard detection window;
+3. Develop a user-friendly interface system to acquire and visualize information for
+processing by the system.
+1.3 Methods to be Used
+The methods employed in this project include:
+i. Review of relevant literature;
+ii. Technical advice from supervisor and other lecturers;
+iii. Consultation with maternity experts and maternal care centres in Ghana;
+iv. Design and development of the System
+v. Testing,Perfromance and Evaluation; and
+vi. Documentation.
+1.4 Tools and Facilities to be Used
+The tools used for this project are:
+i. Python: Development of data processing scripts for sensor data;
+ii. Flutter: Design of a user-friendly mobile application for both pregnant women and
+healthcare providers;
+2
+iii. Tensor Flow: Building and training predictive models using maternal health data to
+detect early signs of complications such as anemia, preeclampsia, and gestational
+diabetes;
+iv. Glucowise sensor: Measures blood glucose levels in real time to detect and monitor
+gestational diabetes, a common pregnancy complication;
+v. MAX30100 sensor: Continuously monitors heart rate and oxygen saturation;
+vi. ESP32 Microcontroller: Collects data from all sensors, performs basic processing, and
+transmits data to the cloud or mobile app via Wi-Fi/Bluetooth;
+vii. DS18B20 temperature sensor: Tracks body temperature to identify fever or potential
+infections;
+viii. Withings BPM connect: Measures blood pressure, helping detect and monitor hyper￾tensive disorders like preeclampsia;
+ix. AWS(Amazon Web Services) Internet of Things Core: Ensures secure and scalable
+data transmission between the device, cloud, and mobile app; and
+x. Version Control: Git for code management and collaboration.
+1.5 Scope of Work
+This project focuses on developing an integrated wearable device and mobile application
+for continuous maternal health monitoring, incorporating real-time data tracking, predictive
+machine learning, secure cloud storage, and user-friendly interfaces to enhance antenatal care
+accessibility in Ghana.
+1.6 Work Organization
+The project is structured as follows: Chapter 1 comprises of the problem statement, project
+objectives, methods used, tools and facilities used, project scope and organization of work.
+Chapter 2 touches on a review of literature with regards to related works on wearables for
+pregnant women. Chapter 3 further elaborates on the methodologies used in the software and
+hardware design processes and its implementation. Chapter 4 outlines the implementation and
+results of the device and appliaction built. Chapter 5 concludes the project by summarizing
+3
+the key findings and providing well-considered recommendations based on the research
+conducted.
+4
+CHAPTER 2
+LITERATURE REVIEW
+2.1 Overview of Literature Review
+Maternal healthcare in Ghana is challenged by high maternal mortality rates and limited
+access to prenatal care, particularly in rural regions. Wearable technology, integrated with
+mobile applications and machine learning (ML), offers a promising approach to enable
+remote monitoring and early intervention for pregnant women. This chapter reviews existing
+literature on maternal health challenges in Ghana, wearable devices for prenatal monitoring,
+ML applications, and technological frameworks, drawing on studies by (Tabassum et al.,
+2024; Wiafe et al., 2024; Hernández-Castañeda et al., 2022; Sarhaddi et al., 2021; Lopez et
+al., 2017). A summary of these works is presented in Table 2.1 to highlight their contributions
+and limitations, identifying gaps that this project aims to address through a context-specific
+solution for Ghana.
+2.2 Internet of Things in Health Monitoring for Pregnant Women
+The integration of the Internet of Things (IoT) into healthcare is rapidly transforming patient
+care paradigms, offering significant potential for enhancing the monitoring and management
+of pregnancy. The ability of IoT systems to connect diverse devices, collect real-time data,
+and facilitate intelligent decision-making positions it as a vital technology for continuous
+and remote maternal-fetal health supervision, moving beyond episodic clinical visits Jara
+et al., (2013), This section explores the architectural frameworks, key enabling technologies,
+security considerations, and interoperability challenges associated with deploying IoT for
+pregnancy monitoring, drawing upon recent research advancements.
+Research highlights the prevalence of layered frameworks, often incorporating IoT, Fog, and
+Cloud tiers to manage data flow and processing efficiently. A common model involves an IoT
+layer comprised of wearable sensors and embedded devices acquiring vital signs and health
+data directly from the expectant mother. These devices might monitor parameters crucial
+during pregnancy, such as blood pressure, glucose levels, fetal heart rate, and maternal activity
+levels. Data collected at this layer is then transmitted, often wirelessly using protocols like
+5
+6LoWPAN Jara et al., (2013), or through multiprotocol gateways supporting technologies
+like Bluetooth Low Energy (BLE) and MQTT Zampognaro et al., (2021),
+The inclusion of a Fog or Edge computing layer situated closer to the data source is frequently
+proposed to address latency and bandwidth constraints inherent in purely cloud-based systems
+(Tamri et al., 2023; Kesavan and Arumugam, 2020). This layer can perform initial data
+aggregation, preprocessing, and even run real-time analytics or predictive algorithms, such as
+those detecting potential complications like pre-eclampsia or gestational diabetes (Bhansali
+and Hiran, 2022; Mrabet et al., 2025). Utilizing secure, software-defined fog gateways can
+enhance network interaction between heterogeneous devices while optimizing resource usage
+Tamri et al., (2023),
+Finally, the Cloud layer typically provides extensive resources for secure long-term data
+storage, complex machine learning analytics, and access control management (Bhansali
+and Hiran, 2022; Deshmukh et al., 2023). Cloud platforms like AWS enable sophisticated
+predictive analytics and anomaly detection, potentially identifying subtle adverse trends in
+maternal or fetal health that warrant clinical intervention (Deshmukh et al., 2023; Mrabet
+et al., 2025). Some architectures propose a four-phase process encompassing data acquisition,
+secure fog-to-cloud integration, decision-making using advanced AI like deep convolutional
+neural networks, and execution (e.g., notifications to clinicians upon detecting abnormalities)
+Kesavan and Arumugam, (2020), Enabling Technologies: Data Acquisition, Processing, and
+Interoperability.
+The foundation of IoT pregnancy monitoring lies in reliable data acquisition. This involves
+diverse sensors integrated into wearables or home-based devices. Patient identification can be
+managed through various methods, including biometrics (facial recognition, fingerprint) or
+NFC/RFID technologies (Mrabet et al., 2025; Jara et al., 2013). Gateways play a critical role
+in managing connectivity, supporting multiple communication protocols (e.g., BLE, MQTT,
+CoAP, Zigbee), and potentially performing initial data harmonization Zampognaro et al.,
+(2021), . Processing the collected data leverages advancements in Artificial Intelligence
+(AI) and Machine Learning (ML). Edge AI integrated into the architecture enables real-time
+insights while preserving privacy Mrabet et al., (2025), Cloud-based ML analytics facilitate
+deeper analysis, pattern recognition, and predictive modeling specific to pregnancy risks
+Deshmukh et al., (2023), . Deep learning models, such as adaptive deep convolutional neural
+6
+networks, have shown promise in classifying health states and identifying abnormalities from
+sensor data Kesavan and Arumugam, (2020), .
+Interoperability remains a significant challenge given the heterogeneity of medical devices
+and healthcare systems. The adoption of standards like HL7 Fast Healthcare Interoperability
+Resources (FHIR) is crucial for ensuring seamless data exchange between IoT devices,
+gateways, electronic health records (EHRs), and clinical platforms (Mrabet et al., 2025;
+Zampognaro et al., 2021; Zúñiga et al., 2022). Architectures leveraging FHIR not only
+for data representation but also for semantic annotation of device capabilities can enable
+dynamic integration of new sensors without system downtime Zampognaro et al., (2021),
+Communication protocols like MQTT are also vital for efficient and standardized data
+transmission within the IoT ecosystem (Mrabet et al., 2025; Deshmukh et al., 2023).
+2.3 Wearable Devices for Prenatal Monitoring
+Wearable technology has shown potential for continuous monitoring of maternal health.
+Lopez et al., (2017), developed a wearable system to monitor hypertension during preg￾nancy, using sensors to track blood pressure and heart rate. Their system enabled real-time
+data transmission to healthcare providers, improving the detection of hypertension-related
+complications. However, the high costs and infrastructure requirements of their solution
+limit its scalability in low-resource settings like Ghana. Sarhaddi et al., (2021), proposed an
+IoT-based maternal monitoring system that integrated sensors for heart rate, temperature, and
+fetal movements, with data stored securely on AWS IoT Core. Their system demonstrated ef￾fectiveness in long-term monitoring and emphasized user-friendly interfaces, but connectivity
+challenges in underserved areas reduced its applicability in rural contexts.
+This aligns with the project’s goal of developing a wearable device with robust data trans￾mission for real-time monitoring.S et al., (2024), designed a wearable module for prenatal
+health monitoring, incorporating sensors and ML algorithms to detect complications like
+preeclampsia and anemia. Their framework was effective in urban settings but lacked testing
+in rural environments, where connectivity and literacy barriers are prevalent (Tabassum et al.,
+2024). This gap highlights the need for a device tailored to Ghana’s diverse settings.
+7
+2.4 Machine Learning for Pregnancy Risk Prediction
+Machine learning enhances wearable devices by enabling early prediction of pregnancy
+complications. For instance, ML techniques like Random Forests have been applied to
+analyze monitored vital signs Gomez et al., (2021), and AI has been explored within mHealth
+apps for conditions like gestational diabetes mellitus Daley et al., (2022), These approaches
+often aim for high accuracy in early risk detection but can require large datasets, which may
+be challenging to obtain in contexts like Ghana due to limited digital health infrastructure
+(Gomez et al., 2021; Daley et al., 2022). This challenge informs the project’s objective to
+develop a lightweight ML model suitable for risk prediction.
+The integration of IoT systems with ML for analysing maternal health data represents a
+key area of development S et al., (2024), However, the computational intensity of some
+models can make them less suitable for low-power devices like the ESP32 microcontroller
+used in this project (Gomez et al., 2021; S et al., 2024). These studies highlight the need
+for optimized ML algorithms to ensure accessibility and feasibility in resource-constrained
+environments.
+2.5 Mobile Applications and User Interfaces
+Mobile applications are essential for making wearable devices accessible to users and health￾care providers. Sarhaddi et al., (2021), developed a mobile app with intuitive visualization
+tools, built using cross-platform frameworks similar to Flutter, which this project adopts.
+Their app provided real-time alerts for abnormal readings, but poor network coverage in rural
+areas limited its effectiveness Sarhaddi et al., (2021),
+This challenge is critical for Ghana, where mobile connectivity varies widely. Tabassum
+et al., (2024), incorporated alert systems in their mobile app, improving response times for
+detected complications. However, their interface lacked multilingual support, a key feature
+for Ghana’s linguistically diverse population. Tabassum et al., (2024), This project addresses
+this gap by prioritizing a user-friendly, multilingual interface to enhance adoption across
+urban and rural users.
+8
+2.6 Technological Frameworks
+The development of monitoring systems for maternal health, particularly in resource-limited
+settings, leverages several key technological frameworks as highlighted in the recent literature.
+A prominent approach involves the use of the Internet of Things (IoT) to create connected
+health monitoring systems. These systems typically integrate sensors, microcontrollers, and
+communication modules to gather and transmit vital patient data remotely Namuddu, (2021),
+Such IoT-based prototypes are specifically designed considering the challenges faced by
+expectant women in rural areas of developing countries. Namuddu, (2021),
+Wearable technology forms another cornerstone, enabling continuous or frequent monitoring
+of vital signs. This includes noninvasive sensors for specific parameters like continuous
+glucose monitoring Hanna et al., (2020), or systems incorporating multiple sensors for
+broader vital sign tracking Gomez et al., (2021), Smartwatches have also been explored for
+functions like out-of-clinic blood pressure monitoring, although challenges associated with
+their use in developing countries have been noted Thiga et al., (2023), The overall impact
+of these healthcare monitoring technologies is aimed at improving pregnancy outcomes Li
+et al., (2021), These tools enable the project to meet its technical requirements, though their
+implementation in Ghana must account for connectivity and training limitations.
+9
+2.7 Review of Related Works
+The combination of wearable devices for prenatal monitoring artificial intelligence has led
+to innovative solutions that promote independent living for pregnant women. This section
+reviews research in this area, highlighting key findings, methodologies, and contributions.
+Table 2.1 Review of Related Works
+Author Methodology Findings Proposed So￾lution
+Limitation
+Tabassum et al.
+(2024)
+Developed
+a wearable
+module with
+sensors and
+ML algorithms
+for prenatal
+monitoring and
+risk detection
+Effective in ur￾ban settings for
+detecting com￾plications like
+preeclampsia
+and anemia.
+Wearable de￾vice with real￾time monitor￾ing and risk
+prediction us￾ing ML
+Primarily tested
+in urban areas;
+limited applica￾bility in rural
+Ghana due to
+connectivity is￾sues.
+Wiafe et al.
+(2024)
+Conducted
+a qualitative
+study on fac￾tors affecting
+pregnancy
+complications
+in Ghana.
+12% of female
+deaths (ages
+15-49) are
+pregnancy￾related; 62%
+due to delayed
+intervention.
+Advocates
+for scalable
+interventions
+to improve
+access to
+prenatal care
+in rural areas.
+Does not pro￾pose a techno￾logical solution;
+focuses on iden￾tifying barriers
+rather than solu￾tions.
+Continued on next page
+10
+Lopez et al.
+(2017)
+Designed a
+wearable sys￾tem to monitor
+hypertension us￾ing sensors for
+blood pressure
+and heart rate.
+Improved
+detection of
+hypertension￾related compli￾cations through
+real-time data
+transmission.
+Wearable
+device for
+continuous
+monitoring
+of hyperten￾sion during
+pregnancy.
+High costs and
+infrastructure
+needs limit
+scalability in
+low-resource
+settings like
+Ghana.
+Sarhaddi et al.
+(2021)
+Evaluated
+an IoT-based
+maternal mon￾itoring system
+with sensors
+and cloud inte￾gration (AWS
+IoT Core).
+Long-term
+monitoring
+of heart rate,
+temperature,
+and fetal move￾ments; secure
+data storage
+achieved.
+IoT-based
+wearable
+system with
+mobile app
+for real-time
+alerts and data
+visualization.
+Connectivity
+challenges in
+underserved
+areas reduce
+effectiveness in
+rural Ghana.
+Hernández￾Castañeda et al.
+(2022)
+Used ML with
+wearable device
+data and med￾ical records to
+predict gesta￾tional diabetes
+biomarkers.
+High accuracy
+in early predic￾tion of gesta￾tional diabetes,
+improving risk
+stratification.
+ML model
+for early
+detection of
+gestational
+diabetes using
+wearable data.
+Requires large
+datasets, chal￾lenging in
+Ghana due
+to limited
+digital health
+infrastructure.
+Continued on next page
+11
+Sharifi-Heris et
+al. (2024)
+Used a mixed￾method ap￾proach to assess
+the feasibility
+of continuous
+smart health
+monitoring
+in pregnant
+women.
+Smart health
+monitoring is
+feasible and im￾proves maternal
+health out￾comes through
+continuous
+tracking.
+Continuous
+smart health
+monitoring
+system using
+wearables
+for pregnant
+women.
+Limited focus
+on low-resource
+settings; scala￾bility in rural
+areas like
+Ghana not
+addressed.
+Maugeri et al.
+(2023)
+Conducted a
+scoping review
+on wearable
+sensors for fetal
+and pregnancy
+outcomes.
+Wearable sen￾sors effectively
+monitor fetal
+heart rate and
+maternal stress,
+supporting
+research on
+outcomes.
+Wearable
+sensors to
+enhance re￾search on fetal
+and pregnancy
+outcomes.
+Lack of studies
+in low-resource
+settings; ap￾plicability in
+Ghana’s rural
+context unclear
+Alim et al.
+(2023)
+Performed a sys￾tematic review
+of wearable sen￾sors for mater￾nal health mon￾itoring.
+Wearables
+improve early
+detection
+of maternal
+complica￾tions but need
+user-friendly
+designs.
+Wearable
+sensors for
+continuous
+monitoring
+of maternal
+vital signs
+like heart rate
+and blood
+pressure.
+Limited fo￾cus on user
+adoption in
+low-literacy
+populations,
+such as rural
+Ghana.
+Continued on next page
+12
+Ameyaw et al.
+(2024)
+Conducted
+a systematic
+review of
+systematic
+reviews on the
+effectiveness of
+mHealth apps
+for maternal
+care
+mHealth apps
+improve mater￾nal healthcare
+delivery by en￾hancing access
+and communica￾tion.
+mHealth apps
+to support
+maternal
+healthcare de￾livery through
+remote access
+and alerts.
+Limited dis￾cussion on
+integration
+with wearables;
+effectiveness in
+areas with poor
+connectivity
+unclear.
+Namuddu, H.
+(2021)
+Design and pro￾totyping of an
+IoT system
+IoT can en￾able real-time
+monitoring for
+rural expectant
+women
+IoT-based
+monitoring
+system for
+maternal
+health
+Limited infras￾tructure in rural
+areas
+Li et al. (2021) Literature re￾view and case
+studies
+Monitoring tech
+improves preg￾nancy outcomes
+Wider adop￾tion of
+healthcare
+monitoring
+technologies
+High costs and
+training needs
+for implementa￾tion.
+Gamberini et al.
+(2022)
+Expert consulta￾tion
+Identified gaps
+in antenatal
+care in resource￾limited settings
+Scalable inter￾ventions for
+antenatal care
+Lack of local
+stakeholder in￾volvement
+Addotey￾Delove et al.
+(2022)
+Instrument de￾velopment and
+survey
+Factors like
+usability and
+trust influ￾ence mHealth
+adoption
+Predictive
+instrument
+for mHealth
+adoption
+Small sam￾ple size for
+validation
+Continued on next page
+13
+Daley et al.
+(2022)
+Scoping review mHealth
+apps with AI
+improve gesta￾tional diabetes
+management
+AI-driven
+mHealth apps
+for clinical
+decision
+support
+Limited app
+accessibility in
+low-resource
+areas
+Wang, J. &
+Wang, D.
+(2022)
+Experimental
+study on wear￾able devices
+Wearables may
+aid postpartum
+recovery
+Intelligent
+wearable
+devices for
+postpartum
+repair
+reliability and
+ethical concerns
+2.8 Research Gap and Future Directions
+Existing studies on wearable devices and monitoring systems for maternal health, such as
+those focusing on system design for rural women Namuddu, (2021), exploring solutions for
+resource-limited settings Gamberini et al., (2022), or examining challenges in developing
+countries Thiga et al., (2023), often highlight general technological aspects but may overlook
+the specific combination of connectivity and literacy challenges prevalent in rural Ghana.
+Additionally, ML models for risk prediction, involving analytical techniques like those
+discussed by Gomez et al., (2021), or integrating AI/ML with IoT (Daley et al., 2022; S et al.,
+2024), are often data-intensive or computationally heavy, limiting their practical deployment
+on low-power devices common in resource-constrained areas.
+Furthermore, solutions often lack specific cultural adaptation for Ghana’s diverse linguistic
+and socio-cultural context, with user adoption influenced by various local factors Addotey￾Delove et al., (2022), potentially hindering acceptance, especially considering the specific
+complication factors relevant in Ghana Wiafe et al., (2024), Future research should focus
+on developing lightweight, energy-efficient ML models tailored for low-resource settings,
+ensuring scalability and functionality in rural areas with limited connectivity. Integrating
+multilingual and culturally sensitive interfaces, informed by an understanding of local adop￾tion predictors and health factors, can enhance usability and acceptance among diverse
+populations in Ghana.
+14
+2.9 Summary of Literature Review
+The literature strongly supports the viability of wearable technology and machine learning
+in maternal health monitoring. However, existing solutions often overlook the specific
+constraints faced by Ghanaian women. By designing a locally adaptable, predictive, and
+user-friendly system, this project aims to contribute a practical, scalable solution for reducing
+maternal mortality in Ghana.
+15
+CHAPTER 3
+SYSTEM DESIGN AND IMPLEMENTATION
+3.1 Overview of System Design and Implementation
+This chapter outlines the systematic approach adopted for the development of the integrated
+wearable device and mobile application. It covers the design framework, hardware and
+software components, machine learning model development, data acquisition methods, and
+system architecture. The methodology ensures that the system is cost-effective, user-friendly,
+and suitable for maternal health monitoring in Ghanaian settings.
+3.2 System Requirements
+The functional and non-functional needs that influenced the platform’s development are
+described in this section. The literature review, user input from surveys, and technological
+viability concerns were the sources of these needs.
+3.2.1 Functional requirements
+i. The ESP32 microcontroller needs to use Bluetooth or Wi-Fi to transmit the gathered
+data to the mobile application.
+ii. The mobile app should synchronize the data to a secure cloud server while connected
+to the internet.
+iii. The system must activate alerts (either pop-up or auditory notifications) when any vital
+sign above a predetermined safe threshold.
+iv. To make it simple for users to monitor changes in their health over time, the app should
+visually represent the data.
+3.2.2 Non-Functional Requirements
+These describe the quality attributes and constraints the system must adhere to for usability,
+performance and scalability. They include
+16
+i. Hardware and software components of the system must be modular to provide simple
+updates and maintenance.
+ii. Cross-platform support on the mobile app to facilitate easy communication.
+iii. The mobile application needs to have an easy-to-use interface that is appropriate for all
+users.
+iv. The system must function reliably for extended periods of time without malfunctioning
+or generating inaccurate data.
+3.3 Software Development
+3.3.1 Mobile Application Development
+The mobile application, developed using Flutter, serves as the primary interface for users
+(pregnant women and healthcare providers). It supports real-time data visualization, alert
+notifications, and offline functionality.
+Features:
+i. Dashboard: Displays real-time and historical data for HR, SpO2, temperature, glucose,
+and blood pressure in graphical formats (line charts and gauges);
+ii. Alerts: Generates pop-up and auditory notifications for abnormal readings ;
+iii. Emergency Options: Provides one-tap access to contact healthcare providers or emer￾gency services and
+iv. Offline Mode: Caches data locally and syncs to the cloud when connectivity is restored
+3.3.2 UI/UX Design
+The app adopts a minimalist design with large, readable fonts and high-contrast colors to
+accommodate users with low literacy or visual impairments. Navigation is simplified with a
+bottom navigation bar for key sections: Home, History, Alerts, and Settings.
+17
+3.4 Cloud Infrastructure Development
+The cloud infrastructure, built on AWS, ensures secure data storage, synchronization, and
+ML model inference. Key components include:
+i. AWS IoT Core: Receives sensor data via MQTT and routes it to other AWS services;
+ii. AWS Lambda: Processes incoming data, triggers alerts, and updates the ML model;
+iii. DynamoDB: Stores time-series sensor data and user profiles and
+iv. Amazon S3: Archives historical data for long-term analysis.
+3.4.1 Data Flow
+i. The wearable device publishes sensor data to an MQTT topic (maternal_health/data);
+ii. AWS IoT Core routes the data to a Lambda function for preprocessing (e.g., validation
+and normalization);
+iii. The Lambda function stores the data in DynamoDB and triggers ML inference if
+necessary; and
+iv. Alerts are sent to the mobile app via push notifications (using AWS SNS) if anomalies
+are detected.
+3.4.2 Security
+i. Encryption: Data is encrypted in transit (TLS) and at rest (AES-256);
+ii. Authentication: Devices and users authenticate using AWS IoT certificates and IAM
+roles and
+iii. Access Control: Role-based access ensures healthcare providers only access relevant
+patient data.
+3.5 Data Preprocessing
+The firmware will implement preprocessing to ensure data reliability and efficiency:
+i. Filtering: Will apply a moving average filter to smooth sensor readings and mitigate
+noise from motion artifacts;
+18
+ii. Threshold Checking: Will compare sensor values against predefined thresholds to
+trigger local alerts;
+iii. Data Compression: Will use delta encoding to minimize data size, optimizing trans￾mission over low-bandwidth networks; and
+iv. Error Handling: Will detect and flag invalid sensor readings for retransmission or
+logging.
+3.5.1 Communication
+The firmware will support dual-mode communication to handle Ghana’s variable connectivity:
+i. Wi-Fi: Will connect to AWS IoT Core via MQTT for direct cloud synchronization
+when internet is available; and
+ii. Bluetooth Low Energy (BLE): Will sync data to the mobile app in offline scenarios,
+caching up to 24 hours of data locally.
+A fallback mechanism will ensure data integrity: if Wi-Fi is unavailable, data will be stored
+in the ESP32’s flash memory and synced via BLE to the mobile app, which will upload it to
+the cloud when connected.
+3.5.2 Power Management
+To extend battery life, the firmware will:
+i. Enter deep sleep mode between sensor readings, waking every 5 seconds for data
+collection;
+ii. Disable Wi-Fi when BLE is active to reduce power consumption; and
+iii. Monitor battery levels and send low-battery alerts to the mobile app
+3.6 Software and Tools
+The development of this project utilizes the following tools:
+i. Programming language:python;
+ii. Framworks: TensorFlow and Pytorch;
+19
