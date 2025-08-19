@@ -18,7 +18,7 @@ class FirebaseDataService {
 
   final FirebaseService _firebaseService = FirebaseService();
   final Random _random = Random();
-  
+
   // Stream controllers for real-time data
   late StreamController<VitalSigns> _vitalSignsController;
   late StreamController<List<Alert>> _alertsController;
@@ -42,13 +42,15 @@ class FirebaseDataService {
   Stream<VitalSigns> get vitalSignsStream => _vitalSignsController.stream;
   Stream<List<Alert>> get alertsStream => _alertsController.stream;
   Stream<List<DoctorContact>> get contactsStream => _contactsController.stream;
-  Stream<List<HealthRecommendation>> get recommendationsStream => _recommendationsController.stream;
+  Stream<List<HealthRecommendation>> get recommendationsStream =>
+      _recommendationsController.stream;
   Stream<PregnancyTimeline?> get timelineStream => _timelineController.stream;
 
   VitalSigns? get currentVitals => _currentVitals;
   List<Alert> get currentAlerts => _currentAlerts;
   List<DoctorContact> get currentContacts => _currentContacts;
-  List<HealthRecommendation> get currentRecommendations => _currentRecommendations;
+  List<HealthRecommendation> get currentRecommendations =>
+      _currentRecommendations;
   PregnancyTimeline? get currentTimeline => _currentTimeline;
 
   /// Initialize the service
@@ -56,7 +58,8 @@ class FirebaseDataService {
     _vitalSignsController = StreamController<VitalSigns>.broadcast();
     _alertsController = StreamController<List<Alert>>.broadcast();
     _contactsController = StreamController<List<DoctorContact>>.broadcast();
-    _recommendationsController = StreamController<List<HealthRecommendation>>.broadcast();
+    _recommendationsController =
+        StreamController<List<HealthRecommendation>>.broadcast();
     _timelineController = StreamController<PregnancyTimeline?>.broadcast();
 
     // Listen to authentication state changes
@@ -69,7 +72,8 @@ class FirebaseDataService {
     });
 
     // Listen to Firebase vital signs stream
-    _vitalSignsSubscription = _firebaseService.vitalSignsStream.listen((vitalSigns) {
+    _vitalSignsSubscription =
+        _firebaseService.vitalSignsStream.listen((vitalSigns) {
       _currentVitals = vitalSigns;
       _vitalSignsController.add(vitalSigns);
     });
@@ -88,10 +92,10 @@ class FirebaseDataService {
     try {
       // Load initial data
       await _loadUserData();
-      
+
       // Set up real-time listeners
       _setupRealtimeListeners();
-      
+
       print('Started listening to user data');
     } catch (e) {
       print('Error starting user data listeners: $e');
@@ -107,7 +111,7 @@ class FirebaseDataService {
     _currentContacts = [];
     _currentRecommendations = [];
     _currentTimeline = null;
-    
+
     // Send empty data to streams
     _vitalSignsController.add(_generateMockVitalSigns());
     _alertsController.add([]);
@@ -124,7 +128,8 @@ class FirebaseDataService {
       _contactsController.add(_currentContacts);
 
       // Load recommendations
-      _currentRecommendations = await _firebaseService.getHealthRecommendations();
+      _currentRecommendations =
+          await _firebaseService.getHealthRecommendations();
       _recommendationsController.add(_currentRecommendations);
 
       // Load timeline
@@ -133,7 +138,8 @@ class FirebaseDataService {
       _timelineController.add(_currentTimeline);
 
       // Load historical vital signs
-      final historicalVitals = await _firebaseService.getHistoricalVitalSigns(limit: 1);
+      final historicalVitals =
+          await _firebaseService.getHistoricalVitalSigns(limit: 1);
       if (historicalVitals.isNotEmpty) {
         _currentVitals = historicalVitals.first;
         _vitalSignsController.add(_currentVitals!);
@@ -142,7 +148,6 @@ class FirebaseDataService {
         _currentVitals = _generateMockVitalSigns();
         _vitalSignsController.add(_currentVitals!);
       }
-
     } catch (e) {
       print('Error loading user data: $e');
       // Fallback to mock data
@@ -197,16 +202,16 @@ class FirebaseDataService {
   /// Generate realistic mock vital signs
   VitalSigns _generateMockVitalSigns() {
     final now = DateTime.now();
-    
+
     // Time-based variations
     final hourOfDay = now.hour;
     final isNightTime = hourOfDay < 6 || hourOfDay > 22;
     final isDayTime = hourOfDay >= 10 && hourOfDay <= 16;
-    
+
     // Circadian rhythm adjustments
     double heartRateAdjustment = 0;
     double temperatureAdjustment = 0;
-    
+
     if (isNightTime) {
       heartRateAdjustment = -8.0;
       temperatureAdjustment = -0.3;
@@ -218,14 +223,14 @@ class FirebaseDataService {
     return VitalSigns(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       timestamp: now,
-      heartRate: _generateValue(85.0 + heartRateAdjustment, 15.0, min: 60.0, max: 120.0),
+      heartRate: _generateValue(85.0 + heartRateAdjustment, 15.0,
+          min: 60.0, max: 120.0),
       oxygenSaturation: _generateValue(98.0, 2.0, min: 95.0, max: 100.0),
-      temperature: _generateValue(36.8 + temperatureAdjustment, 0.8, min: 35.5, max: 37.8),
-      systolicBP: _generateValue(115.0, 12.0, min: 90.0, max: 140.0),
-      diastolicBP: _generateValue(72.0, 8.0, min: 60.0, max: 90.0),
-      glucose: _generateValue(90.0, 25.0, min: 70.0, max: 140.0),
-      source: 'device',
-      isSynced: false,
+      temperature: _generateValue(36.8 + temperatureAdjustment, 0.8,
+          min: 35.5, max: 37.8),
+      glucose: _generateValue(115.0, 12.0, min: 90.0, max: 140.0),
+      source: 'mock_device',
+      isSynced: true,
     );
   }
 
@@ -295,7 +300,8 @@ class FirebaseDataService {
       HealthRecommendation(
         id: '1',
         title: 'Stay Hydrated',
-        description: 'Drink at least 8-10 glasses of water daily to support your pregnancy.',
+        description:
+            'Drink at least 8-10 glasses of water daily to support your pregnancy.',
         type: RecommendationType.hydration,
         priority: RecommendationPriority.medium,
         createdAt: DateTime.now().subtract(const Duration(days: 1)),
@@ -306,7 +312,8 @@ class FirebaseDataService {
       HealthRecommendation(
         id: '2',
         title: 'Gentle Exercise',
-        description: 'Take a 30-minute walk daily to maintain good circulation.',
+        description:
+            'Take a 30-minute walk daily to maintain good circulation.',
         type: RecommendationType.exercise,
         priority: RecommendationPriority.medium,
         createdAt: DateTime.now().subtract(const Duration(days: 2)),
@@ -319,9 +326,10 @@ class FirebaseDataService {
 
   /// Generate mock timeline
   PregnancyTimeline? _generateMockTimeline() {
-    final lmp = DateTime.now().subtract(const Duration(days: 196)); // 28 weeks ago
+    final lmp =
+        DateTime.now().subtract(const Duration(days: 196)); // 28 weeks ago
     final edd = lmp.add(const Duration(days: 280)); // 40 weeks total
-    
+
     return PregnancyTimeline(
       id: '1',
       lastMenstrualPeriod: lmp,
@@ -339,7 +347,8 @@ class FirebaseDataService {
   }
 
   /// Generate a value within a range
-  double _generateValue(double base, double variation, {double? min, double? max}) {
+  double _generateValue(double base, double variation,
+      {double? min, double? max}) {
     final value = base + (_random.nextDouble() - 0.5) * 2 * variation;
     if (min != null && value < min) return min;
     if (max != null && value > max) return max;
@@ -377,7 +386,8 @@ class FirebaseDataService {
   }
 
   /// Save health recommendation to Firebase
-  Future<void> saveHealthRecommendation(HealthRecommendation recommendation) async {
+  Future<void> saveHealthRecommendation(
+      HealthRecommendation recommendation) async {
     try {
       await _firebaseService.saveHealthRecommendation(recommendation);
     } catch (e) {
@@ -436,11 +446,11 @@ class FirebaseDataService {
     _vitalSignsSubscription?.cancel();
     _alertsSubscription?.cancel();
     _authSubscription?.cancel();
-    
+
     _vitalSignsController.close();
     _alertsController.close();
     _contactsController.close();
     _recommendationsController.close();
     _timelineController.close();
   }
-} 
+}

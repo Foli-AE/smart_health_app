@@ -618,10 +618,10 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
     
     // Check if any vitals are outside normal ranges
     final heartRate = _currentVitals!.heartRate ?? 0;
-    final systolic = _currentVitals!.systolicBP ?? 0;
+    final glucose = _currentVitals!.glucose ?? 0;
     final oxygen = _currentVitals!.oxygenSaturation ?? 0;
     
-    return heartRate > 100 || systolic > 140 || oxygen < 95;
+    return heartRate > 100 || glucose > 140 || oxygen < 95;
   }
 
   String _getVitalsAlertMessage() {
@@ -629,7 +629,7 @@ class _CallDoctorScreenState extends State<CallDoctorScreen> with TickerProvider
     
     final concerns = <String>[];
     if ((_currentVitals!.heartRate ?? 0) > 100) concerns.add('elevated heart rate');
-    if ((_currentVitals!.systolicBP ?? 0) > 140) concerns.add('high blood pressure');
+    if ((_currentVitals!.glucose ?? 0) > 140) concerns.add('high glucose level');
     if ((_currentVitals!.oxygenSaturation ?? 0) < 95) concerns.add('low oxygen saturation');
     
     return 'Detected ${concerns.join(', ')}. Consider contacting your healthcare provider.';

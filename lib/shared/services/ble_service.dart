@@ -29,27 +29,33 @@ class BLEService {
   BluetoothCharacteristic? _batteryCharacteristic;
 
   // Stream controllers
-  final StreamController<VitalSigns> _vitalSignsController = StreamController<VitalSigns>.broadcast();
-  final StreamController<DeviceConnectionStatus> _connectionStatusController = 
+  final StreamController<VitalSigns> _vitalSignsController =
+      StreamController<VitalSigns>.broadcast();
+  final StreamController<DeviceConnectionStatus> _connectionStatusController =
       StreamController<DeviceConnectionStatus>.broadcast();
-  final StreamController<double> _batteryLevelController = StreamController<double>.broadcast();
-  final StreamController<String> _statusMessageController = StreamController<String>.broadcast();
-  final StreamController<List<BluetoothDevice>> _discoveredDevicesController = 
+  final StreamController<double> _batteryLevelController =
+      StreamController<double>.broadcast();
+  final StreamController<String> _statusMessageController =
+      StreamController<String>.broadcast();
+  final StreamController<List<BluetoothDevice>> _discoveredDevicesController =
       StreamController<List<BluetoothDevice>>.broadcast();
 
   // Connection state
-  DeviceConnectionStatus _connectionStatus = DeviceConnectionStatus.disconnected;
+  DeviceConnectionStatus _connectionStatus =
+      DeviceConnectionStatus.disconnected;
   bool _isScanning = false;
   bool _isConnecting = false;
   final List<BluetoothDevice> _discoveredDevices = [];
 
   // Getters
   Stream<VitalSigns> get vitalSignsStream => _vitalSignsController.stream;
-  Stream<DeviceConnectionStatus> get connectionStatusStream => _connectionStatusController.stream;
+  Stream<DeviceConnectionStatus> get connectionStatusStream =>
+      _connectionStatusController.stream;
   Stream<double> get batteryLevelStream => _batteryLevelController.stream;
   Stream<String> get statusMessageStream => _statusMessageController.stream;
-  Stream<List<BluetoothDevice>> get discoveredDevicesStream => _discoveredDevicesController.stream;
-  
+  Stream<List<BluetoothDevice>> get discoveredDevicesStream =>
+      _discoveredDevicesController.stream;
+
   DeviceConnectionStatus get connectionStatus => _connectionStatus;
   BluetoothDevice? get connectedDevice => _connectedDevice;
   bool get isScanning => _isScanning;
@@ -59,25 +65,29 @@ class BLEService {
   Future<void> initialize() async {
     try {
       _statusMessageController.add('Checking Bluetooth support...');
-      
+
       // Check if Bluetooth is available
       if (await FlutterBluePlus.isSupported == false) {
-        _statusMessageController.add('❌ Bluetooth not supported on this device');
+        _statusMessageController
+            .add('❌ Bluetooth not supported on this device');
         throw Exception('Bluetooth not supported on this device');
       }
 
-      _statusMessageController.add('✅ Bluetooth supported, requesting permissions...');
+      _statusMessageController
+          .add('✅ Bluetooth supported, requesting permissions...');
 
       // Request Bluetooth permissions
       final permissionService = PermissionService();
-      bool permissionsGranted = await permissionService.requestBluetoothPermissions();
-      
+      bool permissionsGranted =
+          await permissionService.requestBluetoothPermissions();
+
       if (!permissionsGranted) {
         _statusMessageController.add('❌ Bluetooth permissions not granted');
         throw Exception('Bluetooth permissions not granted');
       }
 
-      _statusMessageController.add('✅ Permissions granted, checking Bluetooth state...');
+      _statusMessageController
+          .add('✅ Permissions granted, checking Bluetooth state...');
 
       // Listen to Bluetooth state changes
       FlutterBluePlus.adapterState.listen((state) {
@@ -87,7 +97,8 @@ class BLEService {
             _updateConnectionStatus(DeviceConnectionStatus.ready);
             break;
           case BluetoothAdapterState.off:
-            _statusMessageController.add('❌ Bluetooth is OFF - please turn it on');
+            _statusMessageController
+                .add('❌ Bluetooth is OFF - please turn it on');
             _updateConnectionStatus(DeviceConnectionStatus.disconnected);
             break;
           case BluetoothAdapterState.turningOn:
@@ -138,13 +149,15 @@ class BLEService {
 
     try {
       _statusMessageController.add('🔍 Starting device scan...');
-      
+
       // Check permissions before scanning
       final permissionService = PermissionService();
-      bool permissionsGranted = await permissionService.checkBluetoothPermissions();
-      
+      bool permissionsGranted =
+          await permissionService.checkBluetoothPermissions();
+
       if (!permissionsGranted) {
-        _statusMessageController.add('❌ Bluetooth permissions required for scanning');
+        _statusMessageController
+            .add('❌ Bluetooth permissions required for scanning');
         throw Exception('Bluetooth permissions required for scanning');
       }
 
@@ -168,24 +181,26 @@ class BLEService {
       // Listen for scan results
       FlutterBluePlus.scanResults.listen((results) {
         _discoveredDevices.clear();
-        
+
         for (ScanResult result in results) {
           if (!_discoveredDevices.contains(result.device)) {
             _discoveredDevices.add(result.device);
-            _statusMessageController.add('📱 Found device: ${result.device.name ?? "Unknown"} (${result.device.id})');
-            
+            _statusMessageController.add(
+                '📱 Found device: ${result.device.name ?? "Unknown"} (${result.device.id})');
+
             // Check if this is our target device
-            if (result.device.name == _deviceName || 
+            if (result.device.name == _deviceName ||
                 result.device.name.contains('ESP32') == true ||
                 result.device.name.contains('Maternal') == true) {
-              _statusMessageController.add('🎯 Target ESP32 device found: ${result.device.name}');
+              _statusMessageController
+                  .add('🎯 Target ESP32 device found: ${result.device.name}');
               _stopScan();
               _connectToDevice(result.device);
               break;
             }
           }
         }
-        
+
         // Update discovered devices list
         _discoveredDevicesController.add(List.from(_discoveredDevices));
       });
@@ -221,10 +236,11 @@ class BLEService {
     try {
       _isConnecting = true;
       _updateConnectionStatus(DeviceConnectionStatus.connecting);
-      _statusMessageController.add('🔗 Connecting to ${device.name ?? "device"}...');
+      _statusMessageController
+          .add('🔗 Connecting to ${device.name ?? "device"}...');
 
       print('Connecting to device: ${device.name}');
-      
+
       // Connect to device
       await device.connect(timeout: const Duration(seconds: 10));
       _connectedDevice = device;
@@ -237,7 +253,6 @@ class BLEService {
       _updateConnectionStatus(DeviceConnectionStatus.connected);
       _statusMessageController.add('✅ Successfully connected to ESP32 device');
       print('Successfully connected to ESP32 device');
-
     } catch (e) {
       print('Error connecting to device: $e');
       _statusMessageController.add('❌ Connection failed: $e');
@@ -254,8 +269,12 @@ class BLEService {
       for (BluetoothService service in services) {
         // Heart Rate Service
         if (service.uuid.toString().toUpperCase().contains(_serviceUuid)) {
-          for (BluetoothCharacteristic characteristic in service.characteristics) {
-            if (characteristic.uuid.toString().toUpperCase().contains(_heartRateCharUuid)) {
+          for (BluetoothCharacteristic characteristic
+              in service.characteristics) {
+            if (characteristic.uuid
+                .toString()
+                .toUpperCase()
+                .contains(_heartRateCharUuid)) {
               _heartRateCharacteristic = characteristic;
               await _subscribeToCharacteristic(characteristic, 'Heart Rate');
             }
@@ -263,12 +282,22 @@ class BLEService {
         }
 
         // Custom Vitals Service
-        if (service.uuid.toString().toUpperCase().contains(_customServiceUuid)) {
-          for (BluetoothCharacteristic characteristic in service.characteristics) {
-            if (characteristic.uuid.toString().toUpperCase().contains(_spo2CharUuid)) {
+        if (service.uuid
+            .toString()
+            .toUpperCase()
+            .contains(_customServiceUuid)) {
+          for (BluetoothCharacteristic characteristic
+              in service.characteristics) {
+            if (characteristic.uuid
+                .toString()
+                .toUpperCase()
+                .contains(_spo2CharUuid)) {
               _spo2Characteristic = characteristic;
               await _subscribeToCharacteristic(characteristic, 'SpO2');
-            } else if (characteristic.uuid.toString().toUpperCase().contains(_temperatureCharUuid)) {
+            } else if (characteristic.uuid
+                .toString()
+                .toUpperCase()
+                .contains(_temperatureCharUuid)) {
               _temperatureCharacteristic = characteristic;
               await _subscribeToCharacteristic(characteristic, 'Temperature');
             }
@@ -277,8 +306,12 @@ class BLEService {
 
         // Battery Service
         if (service.uuid.toString().toUpperCase().contains('180F')) {
-          for (BluetoothCharacteristic characteristic in service.characteristics) {
-            if (characteristic.uuid.toString().toUpperCase().contains(_batteryCharUuid)) {
+          for (BluetoothCharacteristic characteristic
+              in service.characteristics) {
+            if (characteristic.uuid
+                .toString()
+                .toUpperCase()
+                .contains(_batteryCharUuid)) {
               _batteryCharacteristic = characteristic;
               await _subscribeToCharacteristic(characteristic, 'Battery');
             }
@@ -293,7 +326,8 @@ class BLEService {
   }
 
   /// Subscribe to characteristic notifications
-  Future<void> _subscribeToCharacteristic(BluetoothCharacteristic characteristic, String type) async {
+  Future<void> _subscribeToCharacteristic(
+      BluetoothCharacteristic characteristic, String type) async {
     try {
       await characteristic.setNotifyValue(true);
       characteristic.value.listen((value) {
@@ -306,7 +340,8 @@ class BLEService {
   }
 
   /// Process incoming characteristic data
-  void _processCharacteristicData(BluetoothCharacteristic characteristic, List<int> value, String type) {
+  void _processCharacteristicData(
+      BluetoothCharacteristic characteristic, List<int> value, String type) {
     try {
       switch (type) {
         case 'Heart Rate':
@@ -373,9 +408,7 @@ class BLEService {
       heartRate: heartRate ?? 0.0,
       oxygenSaturation: oxygenSaturation ?? 0.0,
       temperature: temperature ?? 0.0,
-      systolicBP: 0.0, // Will be updated separately
-      diastolicBP: 0.0, // Will be updated separately
-      glucose: 0.0, // Will be updated separately
+      glucose: 0.0,
       source: 'device',
       isSynced: false,
     );
@@ -390,7 +423,7 @@ class BLEService {
     _spo2Characteristic = null;
     _temperatureCharacteristic = null;
     _batteryCharacteristic = null;
-    
+
     _updateConnectionStatus(DeviceConnectionStatus.disconnected);
     print('ESP32 device disconnected');
   }
@@ -427,7 +460,8 @@ class BLEService {
         _statusMessageController.add('✅ Command sent successfully');
         print('Sent command: $command');
       } else {
-        _statusMessageController.add('❌ Cannot send command: Device not connected or characteristic not available');
+        _statusMessageController.add(
+            '❌ Cannot send command: Device not connected or characteristic not available');
       }
     } catch (e) {
       print('Error sending command: $e');
@@ -480,7 +514,8 @@ final bleStatusMessagesProvider = StreamProvider<String>((ref) {
 });
 
 /// Riverpod provider for discovered devices
-final bleDiscoveredDevicesProvider = StreamProvider<List<BluetoothDevice>>((ref) {
+final bleDiscoveredDevicesProvider =
+    StreamProvider<List<BluetoothDevice>>((ref) {
   final bleService = ref.watch(bleServiceProvider);
   return bleService.discoveredDevicesStream;
-}); 
+});

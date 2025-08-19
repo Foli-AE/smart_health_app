@@ -672,9 +672,9 @@ class _AlertsScreenState extends State<AlertsScreen> with TickerProviderStateMix
           ),
           
           _buildThresholdOption(
-            'Blood Pressure',
+            'Glucose',
             'High: >140/90 mmHg, Low: <90/60 mmHg',
-            AppColors.bloodPressure,
+            AppColors.glucose,
           ),
           
           _buildThresholdOption(

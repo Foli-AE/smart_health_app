@@ -24,7 +24,8 @@ class VitalSignDetailScreen extends StatefulWidget {
   State<VitalSignDetailScreen> createState() => _VitalSignDetailScreenState();
 }
 
-class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with TickerProviderStateMixin {
+class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
+    with TickerProviderStateMixin {
   late TabController _tabController;
   final MockDataService _mockDataService = MockDataService();
   StreamSubscription<VitalSigns>? _vitalSignsSubscription;
@@ -61,20 +62,24 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
 
   Future<void> _loadHistoricalData() async {
     setState(() => _isLoading = true);
-    
+
     await Future.delayed(const Duration(milliseconds: 500));
-    
-    final days = _selectedPeriod == '24H' ? 1 : _selectedPeriod == '7D' ? 7 : 30;
+
+    final days = _selectedPeriod == '24H'
+        ? 1
+        : _selectedPeriod == '7D'
+            ? 7
+            : 30;
     _historicalData = _mockDataService.generateHistoricalData(
       days: days,
       readingsPerDay: _selectedPeriod == '24H' ? 24 : 12,
     );
-    
+
     setState(() => _isLoading = false);
   }
 
   VitalSignConfig get _config => _getVitalConfig();
-  
+
   VitalSignConfig _getVitalConfig() {
     switch (widget.vitalType.toLowerCase()) {
       case 'heart rate':
@@ -131,42 +136,24 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
           warningThreshold: 37.5,
           criticalThreshold: 38.5,
         );
-      case 'blood pressure':
-        return VitalSignConfig(
-          name: 'Blood Pressure',
-          unit: 'mmHg',
-          icon: PhosphorIcons.heartbeat(),
-          color: AppColors.bloodPressure,
-          normalRange: '90-120/60-80',
-          optimalRange: '100-110/65-75',
-          getValue: (vitals) => vitals.systolicBP?.toDouble() ?? 0,
-          tips: [
-            'Limit sodium intake',
-            'Practice relaxation techniques',
-            'Maintain healthy weight',
-            'Get adequate sleep and rest',
-          ],
-          warningThreshold: 140,
-          criticalThreshold: 160,
-        );
-      case 'blood glucose':
-        return VitalSignConfig(
-          name: 'Blood Glucose',
-          unit: 'mg/dL',
-          icon: PhosphorIcons.testTube(),
-          color: AppColors.glucose,
-          normalRange: '70-140',
-          optimalRange: '80-120',
-          getValue: (vitals) => vitals.glucose?.toDouble() ?? 0,
-          tips: [
-            'Eat balanced meals regularly',
-            'Monitor carbohydrate intake',
-            'Stay physically active as recommended',
-            'Follow your dietary plan',
-          ],
-          warningThreshold: 140,
-          criticalThreshold: 180,
-        );
+      // case 'blood pressure':
+      //   return VitalSignConfig(
+      //     name: 'Blood Pressure',
+      //     unit: 'mmHg',
+      //     icon: PhosphorIcons.heartbeat(),
+      //     color: AppColors.bloodPressure,
+      //     normalRange: '90-120/60-80',
+      //     optimalRange: '100-110/65-75',
+      //     getValue: (vitals) => vitals.glucose?.toDouble() ?? 0,
+      //     tips: [
+      //       'Limit sodium intake',
+      //       'Practice relaxation techniques',
+      //       'Maintain healthy weight',
+      //       'Get adequate sleep and rest',
+      //     ],
+      //     warningThreshold: 140,
+      //     criticalThreshold: 160,
+      //   );
       default:
         return VitalSignConfig(
           name: 'Unknown',
@@ -195,7 +182,7 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
           children: [
             // Current Value Card
             _buildCurrentValueCard(),
-            
+
             // Tab Bar
             Container(
               color: AppColors.surface,
@@ -207,14 +194,15 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
                   Tab(text: 'Insights'),
                   Tab(text: 'Tips'),
                 ],
-                labelStyle: AppTypography.labelMedium.copyWith(fontWeight: FontWeight.w600),
+                labelStyle: AppTypography.labelMedium
+                    .copyWith(fontWeight: FontWeight.w600),
                 unselectedLabelStyle: AppTypography.labelMedium,
                 labelColor: AppColors.primary,
                 unselectedLabelColor: AppColors.textSecondary,
                 indicatorColor: AppColors.primary,
               ),
             ),
-            
+
             // Tab Content
             Expanded(
               child: TabBarView(
@@ -266,7 +254,8 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
       ),
       actions: [
         IconButton(
-          icon: Icon(PhosphorIcons.shareNetwork(), color: AppColors.textInverse),
+          icon:
+              Icon(PhosphorIcons.shareNetwork(), color: AppColors.textInverse),
           onPressed: () => _shareData(),
         ),
       ],
@@ -276,7 +265,7 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
   Widget _buildCurrentValueCard() {
     final currentValue = _config.getValue(_currentVitals);
     final status = _getStatus(currentValue);
-    
+
     return Container(
       margin: const EdgeInsets.all(AppTheme.spacingM),
       padding: const EdgeInsets.all(AppTheme.spacingL),
@@ -301,9 +290,9 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
               size: 28,
             ),
           ),
-          
+
           const SizedBox(width: AppTheme.spacingM),
-          
+
           // Value and Status
           Expanded(
             child: Column(
@@ -314,8 +303,8 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
                   textBaseline: TextBaseline.alphabetic,
                   children: [
                     Text(
-                      widget.vitalType.toLowerCase() == 'blood pressure' 
-                          ? '${_currentVitals.systolicBP?.toInt()}/${_currentVitals.diastolicBP?.toInt()}'
+                      widget.vitalType.toLowerCase() == 'blood pressure'
+                          ? '${_currentVitals.glucose?.toInt()}'
                           : widget.vitalType.toLowerCase() == 'temperature'
                               ? currentValue.toStringAsFixed(1)
                               : currentValue.toInt().toString(),
@@ -333,9 +322,9 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: AppTheme.spacingXs),
-                
+
                 // Status Badge
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -354,9 +343,9 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: AppTheme.spacingXs),
-                
+
                 Text(
                   'Normal: ${_config.normalRange}',
                   style: AppTypography.bodySmall.copyWith(
@@ -366,15 +355,15 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
               ],
             ),
           ),
-          
+
           // Trend Indicator
           _buildTrendIndicator(),
         ],
       ),
     ).animate().slideY(
-      begin: -0.3,
-      duration: const Duration(milliseconds: 600),
-    );
+          begin: -0.3,
+          duration: const Duration(milliseconds: 600),
+        );
   }
 
   Widget _buildChartTab() {
@@ -391,9 +380,9 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
         children: [
           // Period Selector
           _buildPeriodSelector(),
-          
+
           const SizedBox(height: AppTheme.spacingL),
-          
+
           // Chart
           Container(
             height: 300,
@@ -405,9 +394,9 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
             ),
             child: _buildLineChart(),
           ),
-          
+
           const SizedBox(height: AppTheme.spacingL),
-          
+
           // Statistics
           _buildStatistics(),
         ],
@@ -427,16 +416,19 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
               fontWeight: FontWeight.bold,
             ),
           ),
-          
+
           const SizedBox(height: AppTheme.spacingM),
-          
+
           // Trend Cards
-          _buildTrendCard('Today', '↗️ +2.3%', 'Slight increase from yesterday', AppColors.success),
-          _buildTrendCard('This Week', '→ Stable', 'Consistent readings within normal range', AppColors.primary),
-          _buildTrendCard('This Month', '↘️ -1.8%', 'Gradual improvement overall', AppColors.success),
-          
+          _buildTrendCard('Today', '↗️ +2.3%', 'Slight increase from yesterday',
+              AppColors.success),
+          _buildTrendCard('This Week', '→ Stable',
+              'Consistent readings within normal range', AppColors.primary),
+          _buildTrendCard('This Month', '↘️ -1.8%',
+              'Gradual improvement overall', AppColors.success),
+
           const SizedBox(height: AppTheme.spacingL),
-          
+
           // Pattern Recognition
           _buildPatternSection(),
         ],
@@ -456,9 +448,9 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
               fontWeight: FontWeight.bold,
             ),
           ),
-          
+
           const SizedBox(height: AppTheme.spacingM),
-          
+
           // Current Status Insight
           _buildInsightCard(
             'Current Status',
@@ -466,7 +458,7 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
             _getStatus(_config.getValue(_currentVitals)).color,
             PhosphorIcons.lightbulb(),
           ),
-          
+
           // Pregnancy Specific Insights
           _buildInsightCard(
             'Pregnancy Context',
@@ -474,7 +466,7 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
             AppColors.primary,
             PhosphorIcons.baby(),
           ),
-          
+
           // Recommendations
           _buildInsightCard(
             'Recommendations',
@@ -499,14 +491,14 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
               fontWeight: FontWeight.bold,
             ),
           ),
-          
+
           const SizedBox(height: AppTheme.spacingM),
-          
+
           // General Tips
           ..._config.tips.map((tip) => _buildTipCard(tip)),
-          
+
           const SizedBox(height: AppTheme.spacingL),
-          
+
           // When to Contact Doctor
           _buildEmergencyCard(),
         ],
@@ -538,7 +530,9 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
                 period,
                 textAlign: TextAlign.center,
                 style: AppTypography.labelMedium.copyWith(
-                  color: isSelected ? AppColors.textInverse : AppColors.textSecondary,
+                  color: isSelected
+                      ? AppColors.textInverse
+                      : AppColors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -598,7 +592,8 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
               reservedSize: 30,
               interval: spots.length > 10 ? spots.length / 5 : 1,
               getTitlesWidget: (value, meta) {
-                if (value.toInt() >= 0 && value.toInt() < _historicalData.length) {
+                if (value.toInt() >= 0 &&
+                    value.toInt() < _historicalData.length) {
                   final time = _historicalData[value.toInt()].timestamp;
                   return Text(
                     '${time.hour}:${time.minute.toString().padLeft(2, '0')}',
@@ -611,8 +606,10 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
               },
             ),
           ),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         ),
         borderData: FlBorderData(show: false),
         lineBarsData: [
@@ -635,7 +632,8 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
             ),
             dotData: FlDotData(
               show: spots.length <= 20,
-              getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
+              getDotPainter: (spot, percent, barData, index) =>
+                  FlDotCirclePainter(
                 radius: 4,
                 color: _config.color,
                 strokeWidth: 2,
@@ -658,11 +656,17 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
 
     return Row(
       children: [
-        Expanded(child: _buildStatCard('Average', avg.toStringAsFixed(1), AppColors.primary)),
+        Expanded(
+            child: _buildStatCard(
+                'Average', avg.toStringAsFixed(1), AppColors.primary)),
         const SizedBox(width: AppTheme.spacingS),
-        Expanded(child: _buildStatCard('Minimum', min.toStringAsFixed(1), AppColors.success)),
+        Expanded(
+            child: _buildStatCard(
+                'Minimum', min.toStringAsFixed(1), AppColors.success)),
         const SizedBox(width: AppTheme.spacingS),
-        Expanded(child: _buildStatCard('Maximum', max.toStringAsFixed(1), AppColors.warning)),
+        Expanded(
+            child: _buildStatCard(
+                'Maximum', max.toStringAsFixed(1), AppColors.warning)),
       ],
     );
   }
@@ -694,7 +698,8 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
     );
   }
 
-  Widget _buildTrendCard(String period, String trend, String description, Color color) {
+  Widget _buildTrendCard(
+      String period, String trend, String description, Color color) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
       padding: const EdgeInsets.all(AppTheme.spacingM),
@@ -766,14 +771,12 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
           ),
         ),
         const SizedBox(height: AppTheme.spacingM),
-        
         _buildPatternCard(
           'Daily Pattern',
           'Values tend to be higher in the afternoon',
           PhosphorIcons.clock(),
           AppColors.primary,
         ),
-        
         _buildPatternCard(
           'Weekly Trend',
           'Stable readings throughout the week',
@@ -784,7 +787,8 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
     );
   }
 
-  Widget _buildPatternCard(String title, String description, IconData icon, Color color) {
+  Widget _buildPatternCard(
+      String title, String description, IconData icon, Color color) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
       padding: const EdgeInsets.all(AppTheme.spacingM),
@@ -822,7 +826,8 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
     );
   }
 
-  Widget _buildInsightCard(String title, String content, Color color, IconData icon) {
+  Widget _buildInsightCard(
+      String title, String content, Color color, IconData icon) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
       padding: const EdgeInsets.all(AppTheme.spacingL),
@@ -940,7 +945,7 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
     final trend = _calculateTrend();
     IconData icon;
     Color color;
-    
+
     if (trend > 2) {
       icon = PhosphorIcons.trendUp();
       color = AppColors.warning;
@@ -971,21 +976,26 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen> with Tick
 
   double _getChartInterval() {
     switch (widget.vitalType.toLowerCase()) {
-      case 'heart rate': return 20;
-      case 'oxygen saturation': return 5;
-      case 'temperature': return 1;
-      case 'blood pressure': return 20;
-      case 'blood glucose': return 20;
-      default: return 10;
+      case 'heart rate':
+        return 20;
+      case 'oxygen saturation':
+        return 5;
+      case 'temperature':
+        return 1;
+      case 'blood pressure':
+        return 20;
+      default:
+        return 10;
     }
   }
 
   double _calculateTrend() {
     if (_historicalData.length < 2) return 0;
-    
+
     final recent = _config.getValue(_historicalData.last);
-    final previous = _config.getValue(_historicalData[_historicalData.length - 2]);
-    
+    final previous =
+        _config.getValue(_historicalData[_historicalData.length - 2]);
+
     return ((recent - previous) / previous) * 100;
   }
 
@@ -1096,4 +1106,4 @@ class VitalSignConfig {
     required this.warningThreshold,
     required this.criticalThreshold,
   });
-} 
+}

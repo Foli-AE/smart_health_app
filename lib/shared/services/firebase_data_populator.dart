@@ -46,17 +46,18 @@ class FirebaseDataPopulator {
     // Generate 7 days of data with 12 readings per day
     for (int day = 6; day >= 0; day--) {
       final date = now.subtract(Duration(days: day));
-      
-      for (int hour = 0; hour < 24; hour += 2) { // Every 2 hours
+
+      for (int hour = 0; hour < 24; hour += 2) {
+        // Every 2 hours
         final timestamp = DateTime(date.year, date.month, date.day, hour);
-        
+
         // Time-based variations for realistic data
         final isNightTime = hour < 6 || hour > 22;
         final isDayTime = hour >= 10 && hour <= 16;
-        
+
         double heartRateAdjustment = 0;
         double temperatureAdjustment = 0;
-        
+
         if (isNightTime) {
           heartRateAdjustment = -8.0;
           temperatureAdjustment = -0.3;
@@ -68,12 +69,12 @@ class FirebaseDataPopulator {
         final vitalSigns = VitalSigns(
           id: '${timestamp.millisecondsSinceEpoch}',
           timestamp: timestamp,
-          heartRate: _generateRealisticValue(85.0 + heartRateAdjustment, 15.0, 60.0, 120.0),
+          heartRate: _generateRealisticValue(
+              85.0 + heartRateAdjustment, 15.0, 60.0, 120.0),
           oxygenSaturation: _generateRealisticValue(98.0, 2.0, 95.0, 100.0),
-          temperature: _generateRealisticValue(36.8 + temperatureAdjustment, 0.8, 35.5, 37.8),
-          systolicBP: _generateRealisticValue(115.0, 12.0, 90.0, 140.0),
-          diastolicBP: _generateRealisticValue(72.0, 8.0, 60.0, 90.0),
-          glucose: _generateRealisticValue(90.0, 25.0, 70.0, 140.0),
+          temperature: _generateRealisticValue(
+              36.8 + temperatureAdjustment, 0.8, 35.5, 37.8),
+          glucose: _generateRealisticValue(115.0, 12.0, 90.0, 140.0),
           source: 'device',
           isSynced: true,
         );
@@ -229,7 +230,8 @@ class FirebaseDataPopulator {
       HealthRecommendation(
         id: '1',
         title: 'Stay Hydrated',
-        description: 'Drink at least 8-10 glasses of water daily to support your pregnancy.',
+        description:
+            'Drink at least 8-10 glasses of water daily to support your pregnancy.',
         type: RecommendationType.hydration,
         priority: RecommendationPriority.medium,
         createdAt: now.subtract(const Duration(days: 1)),
@@ -240,7 +242,8 @@ class FirebaseDataPopulator {
       HealthRecommendation(
         id: '2',
         title: 'Gentle Exercise',
-        description: 'Take a 30-minute walk daily to maintain good circulation.',
+        description:
+            'Take a 30-minute walk daily to maintain good circulation.',
         type: RecommendationType.exercise,
         priority: RecommendationPriority.medium,
         createdAt: now.subtract(const Duration(days: 2)),
@@ -283,14 +286,16 @@ class FirebaseDataPopulator {
     }
 
     await batch.commit();
-    print('Health recommendations populated: ${recommendations.length} recommendations');
+    print(
+        'Health recommendations populated: ${recommendations.length} recommendations');
   }
 
   /// Populate pregnancy timeline
   static Future<void> _populatePregnancyTimeline(String userId) async {
-    final lmp = DateTime.now().subtract(const Duration(days: 196)); // 28 weeks ago
+    final lmp =
+        DateTime.now().subtract(const Duration(days: 196)); // 28 weeks ago
     final edd = lmp.add(const Duration(days: 280)); // 40 weeks total
-    
+
     // Create a simple timeline document
     final timelineData = {
       'id': '1',
@@ -308,7 +313,8 @@ class FirebaseDataPopulator {
           'id': '1',
           'week': 28,
           'title': 'Third Trimester Begins',
-          'description': 'Welcome to the final trimester! Your baby is growing rapidly.',
+          'description':
+              'Welcome to the final trimester! Your baby is growing rapidly.',
           'isCompleted': true,
         },
         {
@@ -324,7 +330,8 @@ class FirebaseDataPopulator {
           'id': '1',
           'week': 28,
           'title': 'Week 28: Growing Strong',
-          'description': 'Your baby is about the size of an eggplant and weighs around 1.1 kg.',
+          'description':
+              'Your baby is about the size of an eggplant and weighs around 1.1 kg.',
           'isRead': true,
         },
       ],
@@ -341,7 +348,8 @@ class FirebaseDataPopulator {
   }
 
   /// Generate realistic value within a range
-  static double _generateRealisticValue(double base, double variation, double min, double max) {
+  static double _generateRealisticValue(
+      double base, double variation, double min, double max) {
     final random = DateTime.now().millisecondsSinceEpoch % 1000 / 1000.0;
     final value = base + (random - 0.5) * 2 * variation;
     if (value < min) return min;
@@ -358,15 +366,21 @@ class FirebaseDataPopulator {
         return;
       }
 
-      final collections = ['vitalSigns', 'alerts', 'contacts', 'recommendations', 'timeline'];
-      
+      final collections = [
+        'vitalSigns',
+        'alerts',
+        'contacts',
+        'recommendations',
+        'timeline'
+      ];
+
       for (final collection in collections) {
         final querySnapshot = await _firestore
             .collection('users')
             .doc(user.uid)
             .collection(collection)
             .get();
-        
+
         final batch = _firestore.batch();
         for (final doc in querySnapshot.docs) {
           batch.delete(doc.reference);
@@ -379,4 +393,4 @@ class FirebaseDataPopulator {
       print('Error clearing data: $e');
     }
   }
-} 
+}

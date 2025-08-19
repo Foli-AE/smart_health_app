@@ -15,7 +15,8 @@ class HistoryScreen extends StatefulWidget {
   State<HistoryScreen> createState() => _HistoryScreenState();
 }
 
-class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateMixin {
+class _HistoryScreenState extends State<HistoryScreen>
+    with TickerProviderStateMixin {
   late TabController _tabController;
   final FirebaseDataService _firebaseDataService = FirebaseDataService();
   List<VitalSigns> _historicalData = [];
@@ -43,23 +44,23 @@ class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateM
 
   Future<void> _loadHistoricalData() async {
     setState(() => _isLoading = true);
-    
+
     try {
-      final days = _selectedPeriod == HistoryPeriod.week 
-          ? 7 
-          : _selectedPeriod == HistoryPeriod.month 
-              ? 30 
+      final days = _selectedPeriod == HistoryPeriod.week
+          ? 7
+          : _selectedPeriod == HistoryPeriod.month
+              ? 30
               : 90;
-      
+
       final endDate = DateTime.now();
       final startDate = endDate.subtract(Duration(days: days));
-      
+
       _historicalData = await _firebaseDataService.getHistoricalVitalSigns(
         startDate: startDate,
         endDate: endDate,
         limit: days * 12, // 12 readings per day
       );
-      
+
       setState(() => _isLoading = false);
     } catch (e) {
       print('Error loading historical data: $e');
@@ -84,7 +85,8 @@ class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateM
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(PhosphorIcons.downloadSimple(), color: AppColors.primary),
+            icon:
+                Icon(PhosphorIcons.downloadSimple(), color: AppColors.primary),
             onPressed: () => _exportData(),
           ),
         ],
@@ -96,14 +98,15 @@ class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateM
             Tab(text: 'Summary'),
             Tab(text: 'Insights'),
           ],
-          labelStyle: AppTypography.labelMedium.copyWith(fontWeight: FontWeight.w600),
+          labelStyle:
+              AppTypography.labelMedium.copyWith(fontWeight: FontWeight.w600),
           unselectedLabelStyle: AppTypography.labelMedium,
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textSecondary,
           indicatorColor: AppColors.primary,
         ),
       ),
-      body: _isLoading 
+      body: _isLoading
           ? _buildLoadingState()
           : TabBarView(
               controller: _tabController,
@@ -237,26 +240,23 @@ class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateM
                       vertical: AppTheme.spacingS,
                     ),
                     decoration: BoxDecoration(
-                      color: isSelected 
-                          ? AppColors.primary 
-                          : AppColors.background,
+                      color:
+                          isSelected ? AppColors.primary : AppColors.background,
                       borderRadius: AppTheme.mediumRadius,
-                                              border: Border.all(
-                          color: isSelected 
-                              ? AppColors.primary 
-                              : AppColors.border,
-                        ),
+                      border: Border.all(
+                        color:
+                            isSelected ? AppColors.primary : AppColors.border,
+                      ),
                     ),
                     child: Text(
                       period.displayName,
                       textAlign: TextAlign.center,
                       style: AppTypography.labelMedium.copyWith(
-                        color: isSelected 
-                            ? AppColors.textInverse 
+                        color: isSelected
+                            ? AppColors.textInverse
                             : AppColors.textSecondary,
-                        fontWeight: isSelected 
-                            ? FontWeight.w600 
-                            : FontWeight.normal,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.normal,
                       ),
                     ),
                   ),
@@ -295,15 +295,13 @@ class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateM
                       vertical: AppTheme.spacingS,
                     ),
                     decoration: BoxDecoration(
-                      color: isSelected 
+                      color: isSelected
                           ? type.color.withValues(alpha: 0.1)
                           : AppColors.background,
                       borderRadius: AppTheme.mediumRadius,
-                                              border: Border.all(
-                          color: isSelected 
-                              ? type.color 
-                              : AppColors.border,
-                        ),
+                      border: Border.all(
+                        color: isSelected ? type.color : AppColors.border,
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -311,19 +309,18 @@ class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateM
                         Icon(
                           type.icon,
                           size: 16,
-                          color: isSelected 
-                              ? type.color 
-                              : AppColors.textSecondary,
+                          color:
+                              isSelected ? type.color : AppColors.textSecondary,
                         ),
                         const SizedBox(width: AppTheme.spacingXs),
                         Text(
                           type.displayName,
                           style: AppTypography.labelMedium.copyWith(
-                            color: isSelected 
-                                ? type.color 
+                            color: isSelected
+                                ? type.color
                                 : AppColors.textSecondary,
-                            fontWeight: isSelected 
-                                ? FontWeight.w600 
+                            fontWeight: isSelected
+                                ? FontWeight.w600
                                 : FontWeight.normal,
                           ),
                         ),
@@ -345,7 +342,7 @@ class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateM
     }
 
     final chartData = _getChartDataForVitalType(_selectedVitalType);
-    
+
     return Container(
       height: 300,
       padding: const EdgeInsets.all(AppTheme.spacingM),
@@ -442,8 +439,10 @@ class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateM
                       },
                     ),
                   ),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
                 lineBarsData: [
@@ -457,10 +456,10 @@ class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateM
                       show: chartData.length <= 20,
                       getDotPainter: (spot, percent, barData, index) =>
                           FlDotCirclePainter(
-                            radius: 3,
-                            color: _selectedVitalType.color,
-                            strokeWidth: 0,
-                          ),
+                        radius: 3,
+                        color: _selectedVitalType.color,
+                        strokeWidth: 0,
+                      ),
                     ),
                     belowBarData: BarAreaData(
                       show: true,
@@ -478,7 +477,7 @@ class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateM
 
   Widget _buildQuickStatsSection() {
     final stats = _calculateQuickStats();
-    
+
     return Row(
       children: [
         Expanded(
@@ -514,7 +513,8 @@ class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateM
     );
   }
 
-  Widget _buildStatCard(String label, String value, String unit, IconData icon, Color color) {
+  Widget _buildStatCard(
+      String label, String value, String unit, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingM),
       decoration: BoxDecoration(
@@ -611,8 +611,6 @@ class _HistoryScreenState extends State<HistoryScreen> with TickerProviderStateM
         return vital.oxygenSaturation;
       case VitalSignType.temperature:
         return vital.temperature;
-      case VitalSignType.bloodPressure:
-        return vital.systolicBP;
       case VitalSignType.glucose:
         return vital.glucose;
     }
@@ -663,7 +661,6 @@ enum VitalSignType {
   heartRate,
   oxygenSaturation,
   temperature,
-  bloodPressure,
   glucose,
 }
 
@@ -682,8 +679,6 @@ extension VitalSignTypeExtension on VitalSignType {
         return 'SpO2';
       case VitalSignType.temperature:
         return 'Temperature';
-      case VitalSignType.bloodPressure:
-        return 'Blood Pressure';
       case VitalSignType.glucose:
         return 'Glucose';
     }
@@ -697,8 +692,6 @@ extension VitalSignTypeExtension on VitalSignType {
         return '%';
       case VitalSignType.temperature:
         return '°C';
-      case VitalSignType.bloodPressure:
-        return 'mmHg';
       case VitalSignType.glucose:
         return 'mg/dL';
     }
@@ -712,10 +705,8 @@ extension VitalSignTypeExtension on VitalSignType {
         return PhosphorIcons.drop();
       case VitalSignType.temperature:
         return PhosphorIcons.thermometer();
-      case VitalSignType.bloodPressure:
-        return PhosphorIcons.pulse();
       case VitalSignType.glucose:
-        return PhosphorIcons.syringe();
+        return PhosphorIcons.pulse();
     }
   }
 
@@ -727,8 +718,6 @@ extension VitalSignTypeExtension on VitalSignType {
         return AppColors.oxygenSaturation;
       case VitalSignType.temperature:
         return AppColors.temperature;
-      case VitalSignType.bloodPressure:
-        return AppColors.bloodPressure;
       case VitalSignType.glucose:
         return AppColors.glucose;
     }
@@ -746,4 +735,4 @@ extension HistoryPeriodExtension on HistoryPeriod {
         return '3 Months';
     }
   }
-} 
+}

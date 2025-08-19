@@ -71,14 +71,14 @@ class VitalSignCard extends StatelessWidget {
                       size: 24,
                     ),
                   ),
-                  
+
                   // Trend indicator
                   if (trend != null) _buildTrendIndicator(),
                 ],
               ),
-              
+
               const SizedBox(height: AppTheme.spacingM),
-              
+
               // Value
               Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -97,9 +97,9 @@ class VitalSignCard extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: AppTheme.spacingS),
-              
+
               // Label and status
               Row(
                 children: [
@@ -122,13 +122,16 @@ class VitalSignCard extends StatelessWidget {
           ),
         ),
       ),
-    ).animate().slideX(
-      begin: 0.3,
-      duration: AppTheme.mediumAnimation,
-      curve: AppTheme.emphasizedCurve,
-    ).fadeIn(
-      duration: AppTheme.longAnimation,
-    );
+    )
+        .animate()
+        .slideX(
+          begin: 0.3,
+          duration: AppTheme.mediumAnimation,
+          curve: AppTheme.emphasizedCurve,
+        )
+        .fadeIn(
+          duration: AppTheme.longAnimation,
+        );
   }
 
   Widget _buildTrendIndicator() {
@@ -154,7 +157,7 @@ class VitalSignCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-                        color: trendColor.withValues(alpha: 0.1),
+        color: trendColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Icon(
@@ -172,7 +175,7 @@ class VitalSignCard extends StatelessWidget {
         vertical: 2,
       ),
       decoration: BoxDecoration(
-                        color: status.color.withValues(alpha: 0.1),
+        color: status.color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -214,10 +217,10 @@ class CompactVitalSign extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingS),
       decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.05),
+        color: color.withValues(alpha: 0.05),
         borderRadius: AppTheme.smallRadius,
         border: Border.all(
-                        color: color.withValues(alpha: 0.2),
+          color: color.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -398,11 +401,20 @@ class VitalSignConfigs {
     VoidCallback? onTap,
   }) {
     VitalSignStatus status;
-    if (systolic >= 90 && systolic <= 120 && diastolic >= 60 && diastolic <= 80) {
+    if (systolic >= 90 &&
+        systolic <= 120 &&
+        diastolic >= 60 &&
+        diastolic <= 80) {
       status = VitalSignStatus.optimal;
-    } else if (systolic >= 80 && systolic <= 140 && diastolic >= 50 && diastolic <= 90) {
+    } else if (systolic >= 80 &&
+        systolic <= 140 &&
+        diastolic >= 50 &&
+        diastolic <= 90) {
       status = VitalSignStatus.normal;
-    } else if (systolic >= 70 && systolic <= 160 && diastolic >= 40 && diastolic <= 100) {
+    } else if (systolic >= 70 &&
+        systolic <= 160 &&
+        diastolic >= 40 &&
+        diastolic <= 100) {
       status = VitalSignStatus.warning;
     } else {
       status = VitalSignStatus.critical;
@@ -413,7 +425,7 @@ class VitalSignConfigs {
       value: '${systolic.toInt()}/${diastolic.toInt()}',
       unit: 'mmHg',
       icon: PhosphorIcons.heartbeat(),
-      color: AppColors.bloodPressure,
+      color: AppColors.glucose,
       status: status,
       trend: trend,
       onTap: onTap,
@@ -437,14 +449,14 @@ class VitalSignConfigs {
     }
 
     return VitalSignCard(
-      label: 'Blood Glucose',
+      label: 'Glucose',
       value: value.toInt().toString(),
       unit: 'mg/dL',
-      icon: PhosphorIcons.testTube(),
+      icon: PhosphorIcons.pulse(),
       color: AppColors.glucose,
       status: status,
       trend: trend,
       onTap: onTap,
     );
   }
-} 
+}

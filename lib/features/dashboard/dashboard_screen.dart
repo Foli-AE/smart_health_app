@@ -20,18 +20,17 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final FirebaseDataService _firebaseDataService = FirebaseDataService();
   StreamSubscription<VitalSigns>? _vitalSignsSubscription;
-  
-  // Current vital signs data
+
+  // Current vitals data
   VitalSigns _currentVitals = VitalSigns(
-    id: 'initial',
-    timestamp: DateTime.now(),
+    id: 'current',
     heartRate: 78,
-    oxygenSaturation: 98,
-    temperature: 36.7,
-    systolicBP: 110,
-    diastolicBP: 70,
-    glucose: 95,
-    source: 'device',
+    oxygenSaturation: 98.5,
+    temperature: 36.8,
+    glucose: 120,
+    // systolicBP: 120,
+    // diastolicBP: 80,
+    timestamp: DateTime.now(),
   );
 
   DeviceConnectionStatus _connectionStatus = DeviceConnectionStatus.connected;
@@ -84,36 +83,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
           onRefresh: _refreshData,
           color: AppColors.primary,
           child: SingleChildScrollView(
-      
             padding: const EdgeInsets.all(AppTheme.spacingM),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Header Section
                 _buildHeaderSection(),
-                
+
                 const SizedBox(height: AppTheme.spacingM),
-                
+
                 // Status Ring Section
                 _buildStatusSection(),
-                
+
                 const SizedBox(height: AppTheme.spacingM),
-                
+
                 // Vital Signs Section
                 _buildVitalSignsSection(),
-                
+
                 const SizedBox(height: AppTheme.spacingM),
-                
+
                 // Quick Actions Section
                 _buildQuickActionsSection(),
-                
+
                 const SizedBox(height: AppTheme.spacingXxl),
               ],
             ),
           ),
         ),
       ),
-      
+
       // Emergency SOS Button
       floatingActionButton: _buildSOSButton(),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -148,9 +146,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               size: 30,
             ),
           ),
-          
+
           const SizedBox(width: AppTheme.spacingM),
-          
+
           // Greeting and Name
           Expanded(
             child: Column(
@@ -179,16 +177,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
-          
+
           // Connection Status
           _buildConnectionIndicator(),
         ],
       ),
     ).animate().slideY(
-      begin: -0.3,
-      duration: const Duration(milliseconds: 600),
-      curve: Curves.easeOut,
-    );
+          begin: -0.3,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeOut,
+        );
   }
 
   Widget _buildStatusSection() {
@@ -243,12 +241,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ).animate().scale(
-            duration: const Duration(milliseconds: 1000),
-            curve: Curves.elasticOut,
-          ),
-          
+                duration: const Duration(milliseconds: 1000),
+                curve: Curves.elasticOut,
+              ),
+
           const SizedBox(height: AppTheme.spacingL),
-          
+
           // Status Message
           AnimatedContainer(
             duration: const Duration(milliseconds: 500),
@@ -285,10 +283,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     ).animate().slideX(
-      begin: 0.3,
-      duration: const Duration(milliseconds: 800),
-      curve: Curves.easeOut,
-    );
+          begin: 0.3,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeOut,
+        );
   }
 
   Widget _buildVitalSignsSection() {
@@ -302,12 +300,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             fontWeight: FontWeight.bold,
           ),
         ).animate().slideX(
-          begin: -0.3,
-          duration: const Duration(milliseconds: 600),
-        ),
-        
+              begin: -0.3,
+              duration: const Duration(milliseconds: 600),
+            ),
+
         const SizedBox(height: AppTheme.spacingM),
-        
+
         // Vital Signs Grid - With staggered animations and flexible layout
         Column(
           children: [
@@ -319,10 +317,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     trend: _getTrend('heartRate'),
                     onTap: () => _showVitalDetails('Heart Rate'),
                   ).animate().slideX(
-                    begin: -0.5,
-                    duration: const Duration(milliseconds: 700),
-                    delay: const Duration(milliseconds: 100),
-                  ),
+                        begin: -0.5,
+                        duration: const Duration(milliseconds: 700),
+                        delay: const Duration(milliseconds: 100),
+                      ),
                 ),
                 const SizedBox(width: AppTheme.spacingXs),
                 Flexible(
@@ -331,16 +329,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     trend: _getTrend('oxygen'),
                     onTap: () => _showVitalDetails('Oxygen Saturation'),
                   ).animate().slideX(
-                    begin: 0.5,
-                    duration: const Duration(milliseconds: 700),
-                    delay: const Duration(milliseconds: 200),
-                  ),
+                        begin: 0.5,
+                        duration: const Duration(milliseconds: 700),
+                        delay: const Duration(milliseconds: 200),
+                      ),
                 ),
               ],
             ),
-            
             const SizedBox(height: AppTheme.spacingS),
-            
             Row(
               children: [
                 Flexible(
@@ -349,39 +345,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     trend: _getTrend('temperature'),
                     onTap: () => _showVitalDetails('Temperature'),
                   ).animate().slideX(
-                    begin: -0.5,
-                    duration: const Duration(milliseconds: 700),
-                    delay: const Duration(milliseconds: 300),
-                  ),
+                        begin: -0.5,
+                        duration: const Duration(milliseconds: 700),
+                        delay: const Duration(milliseconds: 300),
+                      ),
                 ),
                 const SizedBox(width: AppTheme.spacingXs),
                 Flexible(
-                  child: VitalSignConfigs.bloodPressure(
-                    systolic: _currentVitals.systolicBP ?? 0,
-                    diastolic: _currentVitals.diastolicBP ?? 0,
-                    trend: _getTrend('bloodPressure'),
-                    onTap: () => _showVitalDetails('Blood Pressure'),
+                  child: VitalSignConfigs.glucose(
+                    value: _currentVitals.glucose ?? 0,
+                    trend: _getTrend('glucose'),
+                    onTap: () => _showVitalDetails('Glucose'),
                   ).animate().slideX(
-                    begin: 0.5,
-                    duration: const Duration(milliseconds: 700),
-                    delay: const Duration(milliseconds: 400),
-                  ),
+                        begin: 0.5,
+                        duration: const Duration(milliseconds: 700),
+                        delay: const Duration(milliseconds: 400),
+                      ),
                 ),
               ],
             ),
-            
             const SizedBox(height: AppTheme.spacingM),
-            
-            // Glucose as a full-width card
-            VitalSignConfigs.glucose(
-              value: _currentVitals.glucose ?? 0,
-              trend: _getTrend('glucose'),
-              onTap: () => _showVitalDetails('Blood Glucose'),
-            ).animate().slideY(
-              begin: 0.5,
-              duration: const Duration(milliseconds: 700),
-              delay: const Duration(milliseconds: 500),
-            ),
           ],
         ),
       ],
@@ -399,7 +382,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _getLastUpdateTime() {
     final now = DateTime.now();
     final diff = now.difference(_currentVitals.timestamp);
-    
+
     if (diff.inSeconds < 60) {
       return 'Just now';
     } else if (diff.inMinutes < 60) {
@@ -447,7 +430,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildConnectionIndicator() {
     final isConnected = _connectionStatus == DeviceConnectionStatus.connected;
-    
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.symmetric(
@@ -489,10 +472,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       // _isConnecting = true;
       _connectionStatus = DeviceConnectionStatus.connecting;
     });
-    
+
     // Simulate refresh delay
     await Future.delayed(const Duration(seconds: 2));
-    
+
     setState(() {
       // _isConnecting = false;
       _connectionStatus = DeviceConnectionStatus.connected;
@@ -588,13 +571,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             fontWeight: FontWeight.bold,
           ),
         ).animate().slideX(
-          begin: -0.3,
-          duration: const Duration(milliseconds: 600),
-          delay: const Duration(milliseconds: 600),
-        ),
-        
+              begin: -0.3,
+              duration: const Duration(milliseconds: 600),
+              delay: const Duration(milliseconds: 600),
+            ),
+
         const SizedBox(height: AppTheme.spacingM),
-        
+
         // Action Buttons
         Row(
           children: [
@@ -605,14 +588,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 AppColors.secondary,
                 () => _callDoctor(),
               ).animate().slideX(
-                begin: -0.5,
-                duration: const Duration(milliseconds: 700),
-                delay: const Duration(milliseconds: 700),
-              ),
+                    begin: -0.5,
+                    duration: const Duration(milliseconds: 700),
+                    delay: const Duration(milliseconds: 700),
+                  ),
             ),
-            
             const SizedBox(width: AppTheme.spacingM),
-            
             Expanded(
               child: _buildActionButton(
                 'View History',
@@ -620,16 +601,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 AppColors.primary,
                 () => _viewHistory(),
               ).animate().slideX(
-                begin: 0.5,
-                duration: const Duration(milliseconds: 700),
-                delay: const Duration(milliseconds: 800),
-              ),
+                    begin: 0.5,
+                    duration: const Duration(milliseconds: 700),
+                    delay: const Duration(milliseconds: 800),
+                  ),
             ),
           ],
         ),
-        
+
         const SizedBox(height: AppTheme.spacingM),
-        
+
         // Device Connection Button
         SizedBox(
           width: double.infinity,
@@ -645,10 +626,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 : AppColors.warning,
             () => _manageDeviceConnection(),
           ).animate().slideY(
-            begin: 0.5,
-            duration: const Duration(milliseconds: 700),
-            delay: const Duration(milliseconds: 900),
-          ),
+                begin: 0.5,
+                duration: const Duration(milliseconds: 700),
+                delay: const Duration(milliseconds: 900),
+              ),
         ),
       ],
     );
@@ -693,9 +674,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       elevation: 4,
     ).animate().scale(
-      duration: const Duration(milliseconds: 1200),
-      curve: Curves.elasticOut,
-      delay: const Duration(milliseconds: 1000),
-    );
+          duration: const Duration(milliseconds: 1200),
+          curve: Curves.elasticOut,
+          delay: const Duration(milliseconds: 1000),
+        );
   }
-} 
+}

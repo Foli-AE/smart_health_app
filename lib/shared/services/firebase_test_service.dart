@@ -31,7 +31,7 @@ class FirebaseTestService {
   /// Test basic CRUD operations
   static Future<Map<String, dynamic>> testCRUD() async {
     final results = <String, dynamic>{};
-    
+
     try {
       // Test Create
       final testDoc = await _firestore.collection('test').add({
@@ -80,19 +80,26 @@ class FirebaseTestService {
       if (user == null) return;
 
       // Create test vital signs
-      await _firestore.collection('users').doc(user.uid).collection('vitalSigns').add({
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('vitalSigns')
+          .add({
         'heartRate': 78,
         'oxygenSaturation': 98,
         'temperature': 36.7,
         'systolicBP': 110,
         'diastolicBP': 70,
-        'glucose': 95,
         'timestamp': FieldValue.serverTimestamp(),
         'source': 'test',
       });
 
       // Create test alerts
-      await _firestore.collection('users').doc(user.uid).collection('alerts').add({
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('alerts')
+          .add({
         'type': 'info',
         'title': 'Test Alert',
         'message': 'This is a test alert',
@@ -101,7 +108,11 @@ class FirebaseTestService {
       });
 
       // Create test doctor contacts
-      await _firestore.collection('users').doc(user.uid).collection('contacts').add({
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('contacts')
+          .add({
         'name': 'Dr. Sarah Johnson',
         'phone': '+233 20 123 4567',
         'specialty': 'Obstetrics',
@@ -123,14 +134,14 @@ class FirebaseTestService {
 
       // Delete test collections
       final collections = ['vitalSigns', 'alerts', 'contacts'];
-      
+
       for (final collection in collections) {
         final querySnapshot = await _firestore
             .collection('users')
             .doc(user.uid)
             .collection(collection)
             .get();
-        
+
         for (final doc in querySnapshot.docs) {
           await doc.reference.delete();
         }
@@ -141,4 +152,4 @@ class FirebaseTestService {
       print('Failed to cleanup test data: $e');
     }
   }
-} 
+}

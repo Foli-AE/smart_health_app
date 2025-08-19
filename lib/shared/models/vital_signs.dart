@@ -21,19 +21,19 @@ class VitalSigns extends HiveObject {
   @HiveField(4)
   final double? temperature; // Celsius
 
+  // @HiveField(5)
+  // final double? systolicBP; // mmHg
+
+  // @HiveField(6)
+  // final double? diastolicBP; // mmHg
+
   @HiveField(5)
-  final double? systolicBP; // mmHg
-
-  @HiveField(6)
-  final double? diastolicBP; // mmHg
-
-  @HiveField(7)
   final double? glucose; // mg/dL
 
-  @HiveField(8)
+  @HiveField(6)
   final String source; // 'device' or 'manual'
 
-  @HiveField(9)
+  @HiveField(7) 
   final bool isSynced; // Whether synced to cloud
 
   VitalSigns({
@@ -42,8 +42,6 @@ class VitalSigns extends HiveObject {
     this.heartRate,
     this.oxygenSaturation,
     this.temperature,
-    this.systolicBP,
-    this.diastolicBP,
     this.glucose,
     this.source = 'device',
     this.isSynced = false,
@@ -97,32 +95,26 @@ class VitalSigns extends HiveObject {
     }
 
     // Blood Pressure scoring (systolic 90-120, diastolic 60-80)
-    if (systolicBP != null && diastolicBP != null) {
-      if (systolicBP! >= 90 && systolicBP! <= 120 && 
-          diastolicBP! >= 60 && diastolicBP! <= 80) {
-        score += 100;
-      } else if (systolicBP! >= 80 && systolicBP! <= 140 && 
-                 diastolicBP! >= 50 && diastolicBP! <= 90) {
-        score += 70;
-      } else {
-        score += 40;
-      }
-      validMetrics++;
-    }
+    // if (systolicBP != null && diastolicBP != null) {
+    //   if (systolicBP! >= 90 &&
+    //       systolicBP! <= 120 &&
+    //       diastolicBP! >= 60 &&
+    //       diastolicBP! <= 80) {
+    //     score += 100;
+    //   } else if (systolicBP! >= 80 &&
+    //       systolicBP! <= 140 &&
+    //       diastolicBP! >= 50 &&
+    //       diastolicBP! <= 90) {
+    //     score += 70;
+    //   } else {
+    //     score += 40;
+    //   }
+    //   validMetrics++;
+    // }
 
-    // Glucose scoring (70-140 mg/dL is acceptable for pregnancy)
-    if (glucose != null) {
-      if (glucose! >= 70 && glucose! <= 140) {
-        score += 100;
-      } else if (glucose! >= 60 && glucose! <= 180) {
-        score += 70;
-      } else {
-        score += 40;
-      }
-      validMetrics++;
-    }
-
-    return validMetrics > 0 ? score / validMetrics : 50; // Default to 50 if no metrics
+    return validMetrics > 0
+        ? score / validMetrics
+        : 50; // Default to 50 if no metrics
   }
 
   /// Health status level
@@ -143,8 +135,6 @@ class VitalSigns extends HiveObject {
       'heartRate': heartRate,
       'oxygenSaturation': oxygenSaturation,
       'temperature': temperature,
-      'systolicBP': systolicBP,
-      'diastolicBP': diastolicBP,
       'glucose': glucose,
       'source': source,
       'healthScore': healthScore,
@@ -160,8 +150,6 @@ class VitalSigns extends HiveObject {
       heartRate: map['heartRate']?.toDouble(),
       oxygenSaturation: map['oxygenSaturation']?.toDouble(),
       temperature: map['temperature']?.toDouble(),
-      systolicBP: map['systolicBP']?.toDouble(),
-      diastolicBP: map['diastolicBP']?.toDouble(),
       glucose: map['glucose']?.toDouble(),
       source: map['source'] ?? 'device',
       isSynced: true, // From cloud, so already synced
@@ -175,8 +163,6 @@ class VitalSigns extends HiveObject {
     double? heartRate,
     double? oxygenSaturation,
     double? temperature,
-    double? systolicBP,
-    double? diastolicBP,
     double? glucose,
     String? source,
     bool? isSynced,
@@ -187,8 +173,6 @@ class VitalSigns extends HiveObject {
       heartRate: heartRate ?? this.heartRate,
       oxygenSaturation: oxygenSaturation ?? this.oxygenSaturation,
       temperature: temperature ?? this.temperature,
-      systolicBP: systolicBP ?? this.systolicBP,
-      diastolicBP: diastolicBP ?? this.diastolicBP,
       glucose: glucose ?? this.glucose,
       source: source ?? this.source,
       isSynced: isSynced ?? this.isSynced,
@@ -203,8 +187,6 @@ class VitalSigns extends HiveObject {
       'heartRate': heartRate,
       'oxygenSaturation': oxygenSaturation,
       'temperature': temperature,
-      'systolicBP': systolicBP,
-      'diastolicBP': diastolicBP,
       'glucose': glucose,
       'source': source,
       'isSynced': isSynced,
@@ -221,8 +203,6 @@ class VitalSigns extends HiveObject {
       heartRate: data['heartRate']?.toDouble(),
       oxygenSaturation: data['oxygenSaturation']?.toDouble(),
       temperature: data['temperature']?.toDouble(),
-      systolicBP: data['systolicBP']?.toDouble(),
-      diastolicBP: data['diastolicBP']?.toDouble(),
       glucose: data['glucose']?.toDouble(),
       source: data['source'] ?? 'device',
       isSynced: data['isSynced'] ?? true,
@@ -295,4 +275,4 @@ extension DeviceConnectionStatusExtension on DeviceConnectionStatus {
         return 'Connection Error';
     }
   }
-} 
+}
