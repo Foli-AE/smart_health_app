@@ -11,6 +11,7 @@ import '../../shared/models/health_recommendation.dart';
 import '../contacts/call_doctor_screen.dart';
 import '../testing/firebase_test_screen.dart';
 import '../testing/ble_test_screen.dart';
+import 'dart:convert';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -66,6 +67,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
         backgroundColor: AppColors.surface,
         elevation: 0,
         actions: [
+          IconButton(
+            icon: Icon(PhosphorIcons.download(), color: AppColors.primary),
+            onPressed: () => _showExportOptions(),
+            tooltip: 'Export Data',
+          ),
           IconButton(
             icon: Icon(PhosphorIcons.gear(), color: AppColors.primary),
             onPressed: () => _tabController.animateTo(3),
@@ -1233,7 +1239,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
           'Data Export',
           'Download your health data',
           Icons.download,
-          () => _exportData(),
+          () => _showExportOptions(),
         ),
         _buildActionSetting(
           'Privacy Policy',
@@ -1570,7 +1576,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
   void _showLanguageOptions() => _showComingSoon('Language settings');
   void _showUnitOptions() => _showComingSoon('Unit preferences');
   void _showQuietHours() => _showComingSoon('Quiet hours');
-  void _exportData() => _showComingSoon('Data export');
+  // Data export is now handled by the comprehensive export system
   void _showPrivacyPolicy() => _showComingSoon('Privacy policy');
   void _showDeviceSettings() => _showComingSoon('Device settings');
   void _showSyncSettings() => _showComingSoon('Sync settings');
@@ -1622,5 +1628,272 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> with TickerProvid
         );
       }
     }
+  }
+
+  // Export functionality
+  void _showExportOptions() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Export Profile Data'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Choose what to export:'),
+            const SizedBox(height: AppTheme.spacingM),
+            _buildExportOption('Personal Profile', 'Basic profile information'),
+            _buildExportOption('Pregnancy Timeline', 'Pregnancy progress and milestones'),
+            _buildExportOption('Health Recommendations', 'Active health recommendations'),
+            _buildExportOption('Complete Profile', 'All profile data combined'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExportOption(String title, String description) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingS),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTypography.labelMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  description,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppTheme.spacingM),
+          Row(
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _exportData(title, 'CSV');
+                },
+                icon: const Icon(Icons.table_chart, size: 16),
+                label: const Text('CSV'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.textInverse,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.spacingM,
+                    vertical: AppTheme.spacingS,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppTheme.spacingS),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _exportData(title, 'JSON');
+                },
+                icon: const Icon(Icons.code, size: 16),
+                label: const Text('JSON'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.secondary,
+                  foregroundColor: AppColors.textInverse,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppTheme.spacingM,
+                    vertical: AppTheme.spacingS,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _exportData(String dataType, String format) {
+    String data = '';
+    String fileName = '';
+
+    switch (dataType) {
+      case 'Personal Profile':
+        data = _generateProfileCSV();
+        fileName = 'personal_profile';
+        break;
+      case 'Pregnancy Timeline':
+        data = format == 'CSV' ? _generatePregnancyCSV() : _generatePregnancyJSON();
+        fileName = 'pregnancy_timeline';
+        break;
+      case 'Health Recommendations':
+        data = format == 'CSV' ? _generateRecommendationsCSV() : _generateRecommendationsJSON();
+        fileName = 'health_recommendations';
+        break;
+      case 'Complete Profile':
+        data = format == 'CSV' ? _generateCompleteProfileCSV() : _generateCompleteProfileJSON();
+        fileName = 'complete_profile';
+        break;
+    }
+
+    _showExportSuccess(dataType, format, data, fileName);
+  }
+
+  String _generateProfileCSV() {
+    final StringBuffer csv = StringBuffer();
+    csv.writeln('Field,Value');
+    csv.writeln('Name,Amina Osei');
+    csv.writeln('Age,28 years');
+    csv.writeln('Pregnancy Week,32 weeks');
+    csv.writeln('Due Date,March 15, 2025');
+    csv.writeln('Blood Type,O+');
+    csv.writeln('Emergency Contact,Dr. Aryeh +233-20-123-4567');
+    csv.writeln('Last Updated,${DateTime.now().toIso8601String()}');
+    return csv.toString();
+  }
+
+  String _generatePregnancyCSV() {
+    if (_pregnancyTimeline == null) return 'No pregnancy data available';
+    
+    final StringBuffer csv = StringBuffer();
+    csv.writeln('Week,Title,Mother Changes,Baby Development,Tips,Symptoms,Appointments');
+    
+    for (final update in _pregnancyTimeline!.weeklyUpdates) {
+      csv.writeln('${update.week},${update.title},${update.motherChanges},${update.babyDevelopment},${update.tips.join("; ")},${update.symptoms.join("; ")},${update.appointments.join("; ")}');
+    }
+    
+    return csv.toString();
+  }
+
+  String _generatePregnancyJSON() {
+    if (_pregnancyTimeline == null) return '{"error": "No pregnancy data available"}';
+    
+    return JsonEncoder.withIndent('  ').convert({
+      'exportDate': DateTime.now().toIso8601String(),
+      'pregnancyTimeline': {
+        'currentWeek': _pregnancyTimeline!.currentWeek,
+        'estimatedDueDate': _pregnancyTimeline!.estimatedDueDate.toIso8601String(),
+        'weeklyUpdates': _pregnancyTimeline!.weeklyUpdates.map((update) => {
+          'week': update.week,
+          'title': update.title,
+          'motherChanges': update.motherChanges,
+          'babyDevelopment': update.babyDevelopment,
+        }).toList(),
+        'milestones': _pregnancyTimeline!.milestones.map((milestone) => {
+          'title': milestone.title,
+          'description': milestone.description,
+          'week': milestone.week,
+          'isCompleted': milestone.isCompleted,
+        }).toList(),
+      },
+    });
+  }
+
+  String _generateRecommendationsCSV() {
+    final StringBuffer csv = StringBuffer();
+    csv.writeln('Type,Title,Description,Priority,Created Date');
+    
+    for (final recommendation in _recommendations) {
+      csv.writeln('${recommendation.type},${recommendation.title},${recommendation.description},${recommendation.priority},${recommendation.createdAt.toIso8601String()}');
+    }
+    
+    return csv.toString();
+  }
+
+  String _generateRecommendationsJSON() {
+    return JsonEncoder.withIndent('  ').convert({
+      'exportDate': DateTime.now().toIso8601String(),
+      'healthRecommendations': _recommendations.map((rec) => {
+        'type': rec.type.toString(),
+        'title': rec.title,
+        'description': rec.description,
+        'priority': rec.priority.toString(),
+        'createdAt': rec.createdAt.toIso8601String(),
+      }).toList(),
+    });
+  }
+
+  String _generateCompleteProfileCSV() {
+    final StringBuffer csv = StringBuffer();
+    csv.writeln('Section,Field,Value');
+    
+    // Personal Profile
+    csv.writeln('Personal,Name,Amina Osei');
+    csv.writeln('Personal,Age,28 years');
+    csv.writeln('Personal,Pregnancy Week,32 weeks');
+    csv.writeln('Personal,Due Date,March 15, 2025');
+    csv.writeln('Personal,Blood Type,O+');
+    
+    // Pregnancy Timeline
+    if (_pregnancyTimeline != null) {
+      for (final update in _pregnancyTimeline!.weeklyUpdates) {
+        csv.writeln('Pregnancy,Week ${update.week},${update.title}');
+      }
+    }
+    
+    // Health Recommendations
+    for (final rec in _recommendations) {
+      csv.writeln('Health,${rec.type},${rec.title}');
+    }
+    
+    csv.writeln('Export,Date,${DateTime.now().toIso8601String()}');
+    return csv.toString();
+  }
+
+  String _generateCompleteProfileJSON() {
+    return JsonEncoder.withIndent('  ').convert({
+      'exportDate': DateTime.now().toIso8601String(),
+      'personalProfile': {
+        'name': 'Amina Osei',
+        'age': '28 years',
+        'pregnancyWeek': '32 weeks',
+        'dueDate': 'March 15, 2025',
+        'bloodType': 'O+',
+      },
+      'pregnancyTimeline': _pregnancyTimeline != null ? {
+        'currentWeek': _pregnancyTimeline!.currentWeek,
+        'estimatedDueDate': _pregnancyTimeline!.estimatedDueDate.toIso8601String(),
+        'weeklyUpdates': _pregnancyTimeline!.weeklyUpdates.map((update) => {
+          'week': update.week,
+          'title': update.title,
+        }).toList(),
+      } : null,
+      'healthRecommendations': _recommendations.map((rec) => {
+        'type': rec.type.toString(),
+        'title': rec.title,
+        'description': rec.description,
+        'priority': rec.priority.toString(),
+        'createdAt': rec.createdAt.toIso8601String(),
+      }).toList(),
+    });
+  }
+
+  void _showExportSuccess(String dataType, String format, String data, String fileName) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$dataType exported successfully as $format!'),
+        backgroundColor: AppColors.success,
+        action: SnackBarAction(
+          label: 'View',
+          textColor: AppColors.textInverse,
+          onPressed: () {
+            print('📊 Exported $dataType as $format:\n$data');
+            // In a real app, this would save the file or share it
+          },
+        ),
+      ),
+    );
   }
 } 

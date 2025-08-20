@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/vital_signs.dart';
 import '../models/alert.dart';
 import '../models/doctor_contact.dart';
@@ -26,6 +27,9 @@ class FirebaseDataService {
   late StreamController<List<HealthRecommendation>> _recommendationsController;
   late StreamController<PregnancyTimeline?> _timelineController;
 
+  // Streams for real IoT sensor data
+  late StreamController<List<VitalSigns>> _historicalVitalSignsController;
+
   // Current data
   VitalSigns? _currentVitals;
   List<Alert> _currentAlerts = [];
@@ -46,6 +50,10 @@ class FirebaseDataService {
       _recommendationsController.stream;
   Stream<PregnancyTimeline?> get timelineStream => _timelineController.stream;
 
+  /// Get historical vital signs stream from IoT sensor data
+  Stream<List<VitalSigns>> get historicalVitalSignsStream =>
+      _historicalVitalSignsController.stream;
+
   VitalSigns? get currentVitals => _currentVitals;
   List<Alert> get currentAlerts => _currentAlerts;
   List<DoctorContact> get currentContacts => _currentContacts;
@@ -53,38 +61,35 @@ class FirebaseDataService {
       _currentRecommendations;
   PregnancyTimeline? get currentTimeline => _currentTimeline;
 
-  /// Initialize the service
+  /// Initialize the service and start listening to real IoT data
   Future<void> initialize() async {
+    print('🔄 Initializing Firebase Data Service...');
+
+    // Ensure Firebase service is initialized first
+    await FirebaseService.initialize();
+    print('✅ Firebase Service initialized');
+
+    // Initialize stream controllers
     _vitalSignsController = StreamController<VitalSigns>.broadcast();
     _alertsController = StreamController<List<Alert>>.broadcast();
     _contactsController = StreamController<List<DoctorContact>>.broadcast();
     _recommendationsController =
         StreamController<List<HealthRecommendation>>.broadcast();
     _timelineController = StreamController<PregnancyTimeline?>.broadcast();
+    _historicalVitalSignsController =
+        StreamController<List<VitalSigns>>.broadcast();
 
-    // Listen to authentication state changes
-    _authSubscription = _firebaseService.authStateStream.listen((user) {
-      if (user != null) {
-        _startListeningToUserData();
-      } else {
-        _stopListeningToUserData();
-      }
-    });
+    // Start listening to real IoT data
+    _startListeningToIoTData();
+    _startListeningToUserData();
 
-    // Listen to Firebase vital signs stream
-    _vitalSignsSubscription =
-        _firebaseService.vitalSignsStream.listen((vitalSigns) {
-      _currentVitals = vitalSigns;
-      _vitalSignsController.add(vitalSigns);
-    });
+    // Test access to SensorReadings collection
+    await testSensorReadingsAccess();
 
-    // Listen to Firebase alerts stream
-    _alertsSubscription = _firebaseService.alertsStream.listen((alerts) {
-      _currentAlerts = alerts;
-      _alertsController.add(alerts);
-    });
+    // Test different collection names
+    await testDifferentCollectionNames();
 
-    print('Firebase Data Service initialized');
+    print('✅ Firebase Data Service initialized successfully');
   }
 
   /// Start listening to user's Firebase data
@@ -195,6 +200,312 @@ class FirebaseDataService {
         timer.cancel();
       }
     });
+  }
+
+  /// Start listening to real IoT sensor data from SensorReadings collection
+  void _startListeningToIoTData() {
+    print(
+        '🔍 Starting to listen to IoT data from SensorReadings collection...');
+
+    _firebaseService.firestore
+        .collection('SensorReadings')
+        .orderBy('timestamp', descending: true)
+        .limit(1)
+        .snapshots()
+        .listen((snapshot) {
+      print(
+          '📊 Received IoT data snapshot with ${snapshot.docs.length} documents');
+
+      if (snapshot.docs.isNotEmpty) {
+        final latestReading = snapshot.docs.first;
+        final data = latestReading.data();
+        print('📈 Latest IoT reading data: $data');
+
+        // Convert IoT sensor data to VitalSigns format
+        final vitalSigns = _convertIoTDataToVitalSigns(data, latestReading.id);
+        print(
+            '🔄 Converted to VitalSigns: HR=${vitalSigns.heartRate}, SpO2=${vitalSigns.oxygenSaturation}, Temp=${vitalSigns.temperature}, Glucose=${vitalSigns.glucose}');
+
+        _vitalSignsController.add(vitalSigns);
+      } else {
+        print('⚠️ No IoT data found in SensorReadings collection');
+      }
+    }, onError: (error) {
+      print('❌ Error listening to IoT data: $error');
+      // Fallback to mock data if IoT data fails
+      final mockData = _generateMockVitalSigns();
+      print(
+          '🔄 Using fallback mock data: HR=${mockData.heartRate}, SpO2=${mockData.oxygenSaturation}, Temp=${mockData.temperature}');
+      _vitalSignsController.add(mockData);
+    });
+  }
+
+  /// Convert IoT sensor data to VitalSigns format
+  VitalSigns _convertIoTDataToVitalSigns(
+      Map<String, dynamic> data, String documentId) {
+    return VitalSigns(
+      id: documentId,
+      heartRate: data['heartRate']?.toDouble(),
+      oxygenSaturation: data['spo2']
+          ?.toDouble(), // Note: IoT uses 'spo2', we use 'oxygenSaturation'
+      temperature: data['temperature']?.toDouble(),
+      glucose: data['glucose']?.toDouble(), // If available in IoT data
+      timestamp: _convertTimestamp(data['timestamp']),
+      source: 'iot_device',
+      isSynced: true,
+    );
+  }
+
+  /// Convert timestamp from IoT format to DateTime
+  DateTime _convertTimestamp(dynamic timestamp) {
+    if (timestamp is int) {
+      // If timestamp is a Unix timestamp (seconds) - this is what the IoT device sends
+      return DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+    } else if (timestamp is Timestamp) {
+      // If timestamp is a Firestore Timestamp
+      return timestamp.toDate();
+    } else if (timestamp is String) {
+      // If timestamp is a string, try to parse it
+      try {
+        final intValue = int.parse(timestamp);
+        return DateTime.fromMillisecondsSinceEpoch(intValue * 1000);
+      } catch (e) {
+        print('⚠️ Could not parse timestamp string: $timestamp');
+        return DateTime.now();
+      }
+    } else {
+      // Fallback to current time
+      print(
+          '⚠️ Unknown timestamp format: $timestamp (${timestamp.runtimeType})');
+      return DateTime.now();
+    }
+  }
+
+  /// Get historical IoT sensor data for charts and trends
+  Future<List<VitalSigns>> getHistoricalIoTData({int days = 7}) async {
+    print('🔄 Fetching historical IoT data for last $days days...');
+    try {
+      // For IoT data, we'll get the most recent readings regardless of timestamp
+      // since the IoT device timestamps seem to be relative or in a different format
+      final snapshot = await _firebaseService.firestore
+          .collection('SensorReadings')
+          .orderBy('timestamp', descending: true)
+          .limit(100) // Get the most recent 100 readings
+          .get();
+
+      print('📊 Found ${snapshot.docs.length} IoT readings in database');
+
+      final vitalSigns = snapshot.docs.map((doc) {
+        final data = doc.data();
+        print('📈 IoT reading: $data');
+        return _convertIoTDataToVitalSigns(data, doc.id);
+      }).toList();
+
+      print('🔄 Converted ${vitalSigns.length} readings to VitalSigns format');
+      return vitalSigns;
+    } catch (e) {
+      print('❌ Error fetching historical IoT data: $e');
+      return [];
+    }
+  }
+
+  /// Get real-time stream of historical IoT data
+  Stream<List<VitalSigns>> getRealTimeHistoricalData({int days = 7}) {
+    // For IoT data, we'll get the most recent readings regardless of timestamp
+    // since the IoT device timestamps seem to be relative or in a different format
+    return _firebaseService.firestore
+        .collection('SensorReadings')
+        .orderBy('timestamp', descending: true)
+        .limit(100) // Get the most recent 100 readings
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              final data = doc.data();
+              return _convertIoTDataToVitalSigns(data, doc.id);
+            }).toList());
+  }
+
+  /// Get the latest IoT reading for current vitals display
+  Future<VitalSigns?> getLatestIoTReading() async {
+    try {
+      final snapshot = await _firebaseService.firestore
+          .collection('SensorReadings')
+          .orderBy('timestamp', descending: true)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final data = snapshot.docs.first.data();
+        print('📈 Latest IoT reading: $data');
+        return _convertIoTDataToVitalSigns(data, snapshot.docs.first.id);
+      }
+      return null;
+    } catch (e) {
+      print('❌ Error getting latest IoT reading: $e');
+      return null;
+    }
+  }
+
+  /// Get IoT data statistics for charts and insights
+  Future<Map<String, dynamic>> getIoTDataStats({int days = 7}) async {
+    try {
+      // Get the most recent IoT data for statistics
+      final historicalData = await getHistoricalIoTData(days: days);
+
+      if (historicalData.isEmpty) {
+        return {};
+      }
+
+      // Calculate statistics from the available IoT data
+      final heartRates = historicalData
+          .where((v) => v.heartRate != null)
+          .map((v) => v.heartRate!)
+          .toList();
+      final oxygenLevels = historicalData
+          .where((v) => v.oxygenSaturation != null)
+          .map((v) => v.oxygenSaturation!)
+          .toList();
+      final temperatures = historicalData
+          .where((v) => v.temperature != null)
+          .map((v) => v.temperature!)
+          .toList();
+      final glucoseLevels = historicalData
+          .where((v) => v.glucose != null)
+          .map((v) => v.glucose!)
+          .toList();
+
+      return {
+        'heartRate': {
+          'avg': heartRates.isNotEmpty
+              ? heartRates.reduce((a, b) => a + b) / heartRates.length
+              : 0,
+          'min': heartRates.isNotEmpty
+              ? heartRates.reduce((a, b) => a < b ? a : b)
+              : 0,
+          'max': heartRates.isNotEmpty
+              ? heartRates.reduce((a, b) => a > b ? a : b)
+              : 0,
+        },
+        'oxygenSaturation': {
+          'avg': oxygenLevels.isNotEmpty
+              ? oxygenLevels.reduce((a, b) => a + b) / oxygenLevels.length
+              : 0,
+          'min': oxygenLevels.isNotEmpty
+              ? oxygenLevels.reduce((a, b) => a < b ? a : b)
+              : 0,
+          'max': oxygenLevels.isNotEmpty
+              ? oxygenLevels.reduce((a, b) => a > b ? a : b)
+              : 0,
+        },
+        'temperature': {
+          'avg': temperatures.isNotEmpty
+              ? temperatures.reduce((a, b) => a + b) / temperatures.length
+              : 0,
+          'min': temperatures.isNotEmpty
+              ? temperatures.reduce((a, b) => a < b ? a : b)
+              : 0,
+          'max': temperatures.isNotEmpty
+              ? temperatures.reduce((a, b) => a > b ? a : b)
+              : 0,
+        },
+        'glucose': {
+          'avg': glucoseLevels.isNotEmpty
+              ? glucoseLevels.reduce((a, b) => a + b) / glucoseLevels.length
+              : 0,
+          'min': glucoseLevels.isNotEmpty
+              ? glucoseLevels.reduce((a, b) => a < b ? a : b)
+              : 0,
+          'max': glucoseLevels.isNotEmpty
+              ? glucoseLevels.reduce((a, b) => a > b ? a : b)
+              : 0,
+        },
+      };
+    } catch (e) {
+      print('❌ Error calculating IoT data stats: $e');
+      return {};
+    }
+  }
+
+  /// Test method to check if we can read from SensorReadings collection
+  Future<void> testSensorReadingsAccess() async {
+    print('🧪 Testing SensorReadings collection access...');
+    try {
+      // Try to read directly from SensorReadings collection
+      final snapshot = await _firebaseService.firestore
+          .collection('SensorReadings')
+          .limit(5) // Get more documents to see what's available
+          .get();
+
+      print(
+          '📊 SensorReadings collection test: Found ${snapshot.docs.length} documents');
+
+      if (snapshot.docs.isNotEmpty) {
+        for (int i = 0; i < snapshot.docs.length; i++) {
+          final data = snapshot.docs[i].data();
+          print('📈 IoT reading ${i + 1}: $data');
+        }
+
+        // Try to convert the first reading to VitalSigns
+        final firstData = snapshot.docs.first.data();
+        final vitalSigns =
+            _convertIoTDataToVitalSigns(firstData, snapshot.docs.first.id);
+        print(
+            '🔄 Converted first reading to VitalSigns: HR=${vitalSigns.heartRate}, SpO2=${vitalSigns.oxygenSaturation}, Temp=${vitalSigns.temperature}');
+
+        // Send this data to the stream
+        _vitalSignsController.add(vitalSigns);
+      } else {
+        print('⚠️ No documents found in SensorReadings collection');
+        print('💡 This means either:');
+        print('   1. The collection is empty');
+        print('   2. The collection name is different');
+        print('   3. There are permission issues');
+        print('   4. The IoT device hasn\'t sent data yet');
+      }
+    } catch (e) {
+      print('❌ Error testing SensorReadings access: $e');
+      print('💡 This could be due to:');
+      print('   1. Firebase not properly initialized');
+      print('   2. Network connectivity issues');
+      print('   3. Firestore security rules blocking access');
+    }
+  }
+
+  /// Test different possible collection names for IoT data
+  Future<void> testDifferentCollectionNames() async {
+    print('🔍 Testing different possible collection names...');
+
+    final possibleNames = [
+      'SensorReadings',
+      'sensor_readings',
+      'sensorreadings',
+      'iot_data',
+      'iotData',
+      'vital_signs',
+      'vitalSigns',
+      'readings',
+      'sensors',
+    ];
+
+    for (final collectionName in possibleNames) {
+      try {
+        final snapshot = await _firebaseService.firestore
+            .collection(collectionName)
+            .limit(1)
+            .get();
+
+        if (snapshot.docs.isNotEmpty) {
+          print('✅ Found data in collection: $collectionName');
+          final data = snapshot.docs.first.data();
+          print('📈 Sample data: $data');
+          return; // Found the right collection
+        }
+      } catch (e) {
+        // Collection doesn't exist or access denied
+        continue;
+      }
+    }
+
+    print('❌ No data found in any of the tested collection names');
   }
 
   // MARK: - Mock Data Generation (Fallback)

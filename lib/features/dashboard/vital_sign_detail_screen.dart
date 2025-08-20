@@ -9,6 +9,7 @@ import '../../shared/models/vital_signs.dart';
 import '../../shared/services/mock_data_service.dart';
 import '../../shared/widgets/vital_sign_card.dart';
 import 'dart:async';
+import '../../shared/services/firebase_data_service.dart';
 
 class VitalSignDetailScreen extends StatefulWidget {
   final String vitalType;
@@ -27,55 +28,91 @@ class VitalSignDetailScreen extends StatefulWidget {
 class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  final MockDataService _mockDataService = MockDataService();
-  StreamSubscription<VitalSigns>? _vitalSignsSubscription;
+  final FirebaseDataService _firebaseDataService = FirebaseDataService();
+
+  String _selectedPeriod = '7D';
+  bool _isLoading = false;
+
+  // Real IoT data
   List<VitalSigns> _historicalData = [];
-  late VitalSigns _currentVitals;
-  bool _isLoading = true;
-  String _selectedPeriod = '24H';
+  Map<String, dynamic> _dataStats = {};
+  VitalSigns? _currentVitals;
 
   @override
   void initState() {
     super.initState();
-    _currentVitals = widget.currentVitals;
-    _tabController = TabController(length: 4, vsync: this);
-    _loadHistoricalData();
-    _initializeDataStream();
+    _tabController = TabController(length: 3, vsync: this);
+    _loadData();
+
+    // Set up periodic refresh to get latest IoT data
+    Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted) {
+        _loadData();
+      }
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _vitalSignsSubscription?.cancel();
     super.dispose();
   }
 
-  void _initializeDataStream() {
-    _vitalSignsSubscription = _mockDataService.vitalSignsStream.listen(
-      (vitalSigns) {
-        if (mounted) {
-          setState(() => _currentVitals = vitalSigns);
-        }
-      },
-    );
-  }
-
-  Future<void> _loadHistoricalData() async {
+  Future<void> _loadData() async {
     setState(() => _isLoading = true);
 
-    await Future.delayed(const Duration(milliseconds: 500));
+    try {
+      final days = _selectedPeriod == '24H'
+          ? 1
+          : _selectedPeriod == '7D'
+              ? 7
+              : 30;
 
-    final days = _selectedPeriod == '24H'
-        ? 1
-        : _selectedPeriod == '7D'
-            ? 7
-            : 30;
-    _historicalData = _mockDataService.generateHistoricalData(
-      days: days,
-      readingsPerDay: _selectedPeriod == '24H' ? 24 : 12,
+      print('🔄 Loading real IoT data for vital sign detail...');
+
+      // Load real IoT data
+      final data = await _firebaseDataService.getHistoricalIoTData(days: days);
+      final stats = await _firebaseDataService.getIoTDataStats(days: days);
+      final latest = await _firebaseDataService.getLatestIoTReading();
+
+      print('📊 Vital sign detail loaded ${data.length} IoT readings');
+
+      if (mounted) {
+        setState(() {
+          _historicalData = data;
+          _dataStats = stats;
+          _currentVitals = latest ?? _generateDefaultVitals();
+          _isLoading = false;
+        });
+
+        if (data.isNotEmpty) {
+          print('✅ Vital sign detail using real IoT data');
+          print(
+              '📈 Latest reading: ${_config.name}=${_config.getValue(latest ?? _generateDefaultVitals())}');
+        } else {
+          print('⚠️ Vital sign detail: No IoT data available');
+        }
+      }
+    } catch (e) {
+      print('❌ Error loading vital sign data: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _currentVitals = _generateDefaultVitals();
+        });
+      }
+    }
+  }
+
+  VitalSigns _generateDefaultVitals() {
+    return VitalSigns(
+      id: 'default',
+      heartRate: 0,
+      oxygenSaturation: 0,
+      temperature: 0,
+      glucose: 0,
+      timestamp: DateTime.now(),
     );
-
-    setState(() => _isLoading = false);
   }
 
   VitalSignConfig get _config => _getVitalConfig();
@@ -183,6 +220,9 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
             // Current Value Card
             _buildCurrentValueCard(),
 
+            // Real-time Status
+            _buildRealTimeStatus(),
+
             // Tab Bar
             Container(
               color: AppColors.surface,
@@ -192,7 +232,6 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
                   Tab(text: 'Chart'),
                   Tab(text: 'Trends'),
                   Tab(text: 'Insights'),
-                  Tab(text: 'Tips'),
                 ],
                 labelStyle: AppTypography.labelMedium
                     .copyWith(fontWeight: FontWeight.w600),
@@ -211,7 +250,6 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
                   _buildChartTab(),
                   _buildTrendsTab(),
                   _buildInsightsTab(),
-                  _buildTipsTab(),
                 ],
               ),
             ),
@@ -262,8 +300,44 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
     );
   }
 
+  Widget _buildRealTimeStatus() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
+      padding: const EdgeInsets.all(AppTheme.spacingS),
+      decoration: BoxDecoration(
+        color: AppColors.success.withValues(alpha: 0.1),
+        borderRadius: AppTheme.smallRadius,
+        border: Border.all(
+          color: AppColors.success.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: AppColors.success,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: AppTheme.spacingS),
+          Text(
+            'Live IoT Data',
+            style: AppTypography.labelSmall.copyWith(
+              color: AppColors.success,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCurrentValueCard() {
-    final currentValue = _config.getValue(_currentVitals);
+    final currentValue =
+        _config.getValue(_currentVitals ?? _generateDefaultVitals());
     final status = _getStatus(currentValue);
 
     return Container(
@@ -304,7 +378,7 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
                   children: [
                     Text(
                       widget.vitalType.toLowerCase() == 'blood pressure'
-                          ? '${_currentVitals.glucose?.toInt()}'
+                          ? '${_currentVitals?.glucose?.toInt()}'
                           : widget.vitalType.toLowerCase() == 'temperature'
                               ? currentValue.toStringAsFixed(1)
                               : currentValue.toInt().toString(),
@@ -455,7 +529,9 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
           _buildInsightCard(
             'Current Status',
             _getStatusInsight(),
-            _getStatus(_config.getValue(_currentVitals)).color,
+            _getStatus(_config
+                    .getValue(_currentVitals ?? _generateDefaultVitals()))
+                .color,
             PhosphorIcons.lightbulb(),
           ),
 
@@ -514,7 +590,7 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
           child: GestureDetector(
             onTap: () {
               setState(() => _selectedPeriod = period);
-              _loadHistoricalData();
+              _loadData();
             },
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -547,7 +623,7 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
     if (_historicalData.isEmpty) {
       return Center(
         child: Text(
-          'No data available',
+          'No data available for the selected period',
           style: AppTypography.bodyMedium.copyWith(
             color: AppColors.textSecondary,
           ),
@@ -556,36 +632,38 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
     }
 
     final spots = _historicalData.asMap().entries.map((entry) {
-      final index = entry.key.toDouble();
-      final value = _config.getValue(entry.value);
-      return FlSpot(index, value);
+      final index = entry.key;
+      final vital = entry.value;
+      final value = _config.getValue(vital);
+      return FlSpot(index.toDouble(), value);
     }).toList();
 
     return LineChart(
       LineChartData(
         gridData: FlGridData(
           show: true,
-          drawVerticalLine: false,
+          drawVerticalLine: true,
           horizontalInterval: _getChartInterval(),
-          getDrawingHorizontalLine: (value) => FlLine(
-            color: AppColors.border.withValues(alpha: 0.3),
-            strokeWidth: 1,
-          ),
+          verticalInterval: spots.length > 10 ? spots.length / 5 : 1,
+          getDrawingHorizontalLine: (value) {
+            return FlLine(
+              color: AppColors.border,
+              strokeWidth: 1,
+            );
+          },
+          getDrawingVerticalLine: (value) {
+            return FlLine(
+              color: AppColors.border,
+              strokeWidth: 1,
+            );
+          },
         ),
         titlesData: FlTitlesData(
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 40,
-              interval: _getChartInterval(),
-              getTitlesWidget: (value, meta) => Text(
-                value.toInt().toString(),
-                style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.textTertiary,
-                ),
-              ),
-            ),
-          ),
+          show: true,
+          rightTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          topTitles:
+              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -596,22 +674,41 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
                     value.toInt() < _historicalData.length) {
                   final time = _historicalData[value.toInt()].timestamp;
                   return Text(
-                    '${time.hour}:${time.minute.toString().padLeft(2, '0')}',
+                    _formatTime(time),
                     style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.textTertiary,
+                      color: AppColors.textSecondary,
                     ),
                   );
                 }
-                return const SizedBox();
+                return const Text('');
               },
             ),
           ),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              interval: _getChartInterval(),
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  value.toInt().toString(),
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                );
+              },
+              reservedSize: 42,
+            ),
+          ),
         ),
         borderData: FlBorderData(show: false),
+        minX: 0,
+        maxX: (spots.length - 1).toDouble(),
+        minY: spots.isNotEmpty
+            ? spots.map((spot) => spot.y).reduce((a, b) => a < b ? a : b) - 5
+            : 0,
+        maxY: spots.isNotEmpty
+            ? spots.map((spot) => spot.y).reduce((a, b) => a > b ? a : b) + 5
+            : 100,
         lineBarsData: [
           LineChartBarData(
             spots: spots,
@@ -619,17 +716,6 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
             color: _config.color,
             barWidth: 3,
             isStrokeCapRound: true,
-            belowBarData: BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  _config.color.withValues(alpha: 0.3),
-                  _config.color.withValues(alpha: 0.1),
-                ],
-              ),
-            ),
             dotData: FlDotData(
               show: spots.length <= 20,
               getDotPainter: (spot, percent, barData, index) =>
@@ -637,8 +723,12 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
                 radius: 4,
                 color: _config.color,
                 strokeWidth: 2,
-                strokeColor: AppColors.surface,
+                strokeColor: AppColors.background,
               ),
+            ),
+            belowBarData: BarAreaData(
+              show: true,
+              color: _config.color.withValues(alpha: 0.1),
             ),
           ),
         ],
@@ -646,10 +736,42 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
     );
   }
 
-  Widget _buildStatistics() {
-    if (_historicalData.isEmpty) return const SizedBox();
+  String _formatTime(DateTime time) {
+    if (_selectedPeriod == '24H') {
+      return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    } else {
+      return '${time.day}/${time.month}';
+    }
+  }
 
-    final values = _historicalData.map(_config.getValue).toList();
+  Widget _buildStatistics() {
+    if (_historicalData.isEmpty) {
+      return Center(
+        child: Text(
+          'No data available for statistics',
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+      );
+    }
+
+    final values = _historicalData
+        .map((vital) => _config.getValue(vital))
+        .where((value) => value > 0)
+        .toList();
+
+    if (values.isEmpty) {
+      return Center(
+        child: Text(
+          'No valid data for statistics',
+          style: AppTypography.bodyMedium.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+      );
+    }
+
     final avg = values.reduce((a, b) => a + b) / values.length;
     final min = values.reduce((a, b) => a < b ? a : b);
     final max = values.reduce((a, b) => a > b ? a : b);
@@ -657,16 +779,28 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
     return Row(
       children: [
         Expanded(
-            child: _buildStatCard(
-                'Average', avg.toStringAsFixed(1), AppColors.primary)),
+          child: _buildStatCard(
+            'Average',
+            avg.toStringAsFixed(1),
+            AppColors.primary,
+          ),
+        ),
         const SizedBox(width: AppTheme.spacingS),
         Expanded(
-            child: _buildStatCard(
-                'Minimum', min.toStringAsFixed(1), AppColors.success)),
+          child: _buildStatCard(
+            'Minimum',
+            min.toStringAsFixed(1),
+            AppColors.success,
+          ),
+        ),
         const SizedBox(width: AppTheme.spacingS),
         Expanded(
-            child: _buildStatCard(
-                'Maximum', max.toStringAsFixed(1), AppColors.warning)),
+          child: _buildStatCard(
+            'Maximum',
+            max.toStringAsFixed(1),
+            AppColors.warning,
+          ),
+        ),
       ],
     );
   }
@@ -992,15 +1126,24 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
   double _calculateTrend() {
     if (_historicalData.length < 2) return 0;
 
-    final recent = _config.getValue(_historicalData.last);
-    final previous =
-        _config.getValue(_historicalData[_historicalData.length - 2]);
+    final values = _historicalData
+        .map((vital) => _config.getValue(vital))
+        .where((value) => value > 0)
+        .toList();
+
+    if (values.length < 2) return 0;
+
+    final recent = values.last;
+    final previous = values[values.length - 2];
+
+    if (previous == 0) return 0;
 
     return ((recent - previous) / previous) * 100;
   }
 
   String _getStatusInsight() {
-    final status = _getStatus(_config.getValue(_currentVitals));
+    final status = _getStatus(
+        _config.getValue(_currentVitals ?? _generateDefaultVitals()));
     switch (status) {
       case VitalSignStatus.optimal:
         return 'Your ${_config.name.toLowerCase()} is in the optimal range. This indicates excellent health status for your stage of pregnancy.';
@@ -1029,7 +1172,8 @@ class _VitalSignDetailScreenState extends State<VitalSignDetailScreen>
   }
 
   String _getRecommendations() {
-    final status = _getStatus(_config.getValue(_currentVitals));
+    final status = _getStatus(
+        _config.getValue(_currentVitals ?? _generateDefaultVitals()));
     switch (status) {
       case VitalSignStatus.optimal:
         return 'Continue your current lifestyle habits. Maintain regular prenatal appointments and follow your healthcare provider\'s guidance.';

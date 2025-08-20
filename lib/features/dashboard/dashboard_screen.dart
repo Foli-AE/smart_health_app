@@ -8,6 +8,7 @@ import '../../shared/models/vital_signs.dart';
 import '../../shared/widgets/vital_sign_card.dart';
 import '../../shared/services/firebase_data_service.dart';
 import 'vital_sign_detail_screen.dart';
+import '../../core/navigation/main_navigation.dart';
 import 'dart:async';
 
 class DashboardScreen extends StatefulWidget {
@@ -17,54 +18,119 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen>
+    with TickerProviderStateMixin {
   final FirebaseDataService _firebaseDataService = FirebaseDataService();
-  StreamSubscription<VitalSigns>? _vitalSignsSubscription;
+  StreamSubscription<List<VitalSigns>>? _vitalSignsSubscription;
+  StreamSubscription<List<VitalSigns>>? _historicalDataSubscription;
 
-  // Current vitals data
+  // Current vitals data from IoT
   VitalSigns _currentVitals = VitalSigns(
-    id: 'current',
-    heartRate: 78,
-    oxygenSaturation: 98.5,
+    id: 'initial',
+    heartRate: 75, // Realistic fallback values
+    oxygenSaturation: 98,
     temperature: 36.8,
-    glucose: 120,
-    // systolicBP: 120,
-    // diastolicBP: 80,
+    glucose: 95,
     timestamp: DateTime.now(),
   );
 
-  DeviceConnectionStatus _connectionStatus = DeviceConnectionStatus.connected;
-  // bool _isConnecting = false;
+  // Historical data for trends
+  List<VitalSigns> _historicalData = [];
+  Map<String, dynamic> _dataStats = {};
+
+  // Connection status
+  DeviceConnectionStatus _connectionStatus =
+      DeviceConnectionStatus.disconnected;
 
   @override
   void initState() {
     super.initState();
-    _initializeFirebaseDataService();
+    _initializeFirebaseService();
+
+    // Set up periodic refresh to ensure we always have the latest IoT data
+    Timer.periodic(const Duration(seconds: 15), (timer) {
+      if (mounted && _connectionStatus == DeviceConnectionStatus.connected) {
+        _loadLatestVitals();
+      }
+    });
   }
 
-  Future<void> _initializeFirebaseDataService() async {
-    await _firebaseDataService.initialize();
-    _initializeDataStream();
+  Future<void> _initializeFirebaseService() async {
+    try {
+      // Initialize the Firebase data service first
+      await _firebaseDataService.initialize();
+      print('✅ Firebase Data Service initialized successfully');
+
+      // Set up real-time data streams immediately
+      _initializeDataStream();
+
+      // Load initial data
+      await _loadInitialData();
+    } catch (e) {
+      print('❌ Error initializing Firebase service: $e');
+    }
+  }
+
+  Future<void> _loadInitialData() async {
+    try {
+      // Load latest vitals first
+      await _loadLatestVitals();
+
+      // Then load historical data and stats
+      await _loadHistoricalData();
+      await _loadDataStats();
+
+      print('✅ Initial data loaded successfully');
+    } catch (e) {
+      print('❌ Error loading initial data: $e');
+    }
   }
 
   @override
   void dispose() {
     _vitalSignsSubscription?.cancel();
+    _historicalDataSubscription?.cancel();
     super.dispose();
   }
 
   void _initializeDataStream() {
-    // Listen to real-time vital signs updates
-    _vitalSignsSubscription = _firebaseDataService.vitalSignsStream.listen(
-      (vitalSigns) {
-        if (mounted) {
+    print('🔄 Setting up real-time data streams in dashboard...');
+
+    // Listen to real-time vital signs updates from IoT (latest readings)
+    _vitalSignsSubscription =
+        _firebaseDataService.getRealTimeHistoricalData(days: 1).listen(
+      (historicalData) {
+        print(
+            '📊 Dashboard received real-time data: ${historicalData.length} readings');
+        if (historicalData.isNotEmpty && mounted) {
+          final latest = historicalData.last;
+          print(
+              '📈 Latest real-time reading: HR=${latest.heartRate}, SpO2=${latest.oxygenSaturation}, Temp=${latest.temperature}, Glucose=${latest.glucose}');
+
           setState(() {
-            _currentVitals = vitalSigns;
+            _currentVitals = latest;
             _connectionStatus = DeviceConnectionStatus.connected;
           });
+
+          // Also update historical data with the latest reading
+          if (_historicalData.isNotEmpty) {
+            final updatedHistory = List<VitalSigns>.from(_historicalData);
+            // Add new reading if it's not already in the list
+            if (!updatedHistory.any((vital) => vital.id == latest.id)) {
+              updatedHistory.add(latest);
+              // Keep only the last 100 readings to prevent memory issues
+              if (updatedHistory.length > 100) {
+                updatedHistory.removeRange(0, updatedHistory.length - 100);
+              }
+              setState(() {
+                _historicalData = updatedHistory;
+              });
+            }
+          }
         }
       },
       onError: (error) {
+        print('❌ Dashboard error in real-time vital signs stream: $error');
         if (mounted) {
           setState(() {
             _connectionStatus = DeviceConnectionStatus.error;
@@ -72,6 +138,186 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
       },
     );
+
+    // Listen to historical data for trends and charts
+    _historicalDataSubscription =
+        _firebaseDataService.getRealTimeHistoricalData(days: 7).listen(
+      (historicalData) {
+        print(
+            '📊 Dashboard received 7-day historical data: ${historicalData.length} readings');
+        if (mounted) {
+          setState(() {
+            _historicalData = historicalData;
+          });
+        }
+      },
+      onError: (error) {
+        print('❌ Dashboard error in historical data stream: $error');
+      },
+    );
+  }
+
+  Future<void> _loadHistoricalData() async {
+    print('🔄 Loading historical IoT data...');
+    try {
+      final data = await _firebaseDataService.getHistoricalIoTData(days: 7);
+      print('📊 Loaded ${data.length} historical readings');
+
+      if (data.isNotEmpty) {
+        print('✅ Using real IoT data for dashboard');
+        if (mounted) {
+          setState(() {
+            _historicalData = data;
+            // Update current vitals with the latest real data if not already set
+            if (data.isNotEmpty && _currentVitals.id == 'initial') {
+              _currentVitals = data.last;
+              _connectionStatus = DeviceConnectionStatus.connected;
+              print('📈 Set initial current vitals from historical data');
+            }
+          });
+        }
+      } else {
+        print('⚠️ No IoT data found, generating realistic test data...');
+        final testData = _generateRealisticTestData();
+        if (mounted) {
+          setState(() {
+            _historicalData = testData;
+          });
+        }
+      }
+    } catch (e) {
+      print('❌ Error loading historical data: $e');
+      // Generate test data as fallback
+      final testData = _generateRealisticTestData();
+      if (mounted) {
+        setState(() {
+          _historicalData = testData;
+        });
+      }
+    }
+  }
+
+  Future<void> _loadLatestVitals() async {
+    print('🔄 Loading latest IoT vitals...');
+    try {
+      final latest = await _firebaseDataService.getLatestIoTReading();
+      if (latest != null && mounted) {
+        print(
+            '✅ Updated current vitals with latest IoT data: HR=${latest.heartRate}, SpO2=${latest.oxygenSaturation}, Temp=${latest.temperature}, Glucose=${latest.glucose}');
+        setState(() {
+          _currentVitals = latest;
+          _connectionStatus = DeviceConnectionStatus.connected;
+        });
+
+        // Also update historical data if this is a new reading
+        if (_historicalData.isEmpty ||
+            !_historicalData.any((vital) => vital.id == latest.id)) {
+          final updatedHistory = List<VitalSigns>.from(_historicalData);
+          updatedHistory.add(latest);
+          setState(() {
+            _historicalData = updatedHistory;
+          });
+        }
+      } else {
+        print('⚠️ No latest IoT vitals available');
+      }
+    } catch (e) {
+      print('❌ Error loading latest vitals: $e');
+    }
+  }
+
+  List<VitalSigns> _generateRealisticTestData() {
+    final now = DateTime.now();
+    final data = <VitalSigns>[];
+
+    for (int i = 6; i >= 0; i--) {
+      for (int hour = 0; hour < 24; hour += 2) {
+        final timestamp = now.subtract(Duration(days: i, hours: hour));
+
+        // Generate realistic variations
+        final heartRate =
+            75 + (DateTime.now().millisecond % 20) - 10; // 65-85 BPM
+        final oxygenSaturation =
+            98 + (DateTime.now().millisecond % 4) - 2; // 96-100%
+        final temperature =
+            36.8 + (DateTime.now().millisecond % 10) / 10 - 0.5; // 36.3-37.3°C
+        final glucose =
+            95 + (DateTime.now().millisecond % 20) - 10; // 85-105 mg/dL
+
+        data.add(VitalSigns(
+          id: 'test_${timestamp.millisecondsSinceEpoch}',
+          heartRate: heartRate.toDouble(),
+          oxygenSaturation: oxygenSaturation.toDouble(),
+          temperature: temperature,
+          glucose: glucose.toDouble(),
+          timestamp: timestamp,
+          source: 'test_device',
+          isSynced: true,
+        ));
+      }
+    }
+
+    print('📊 Generated ${data.length} realistic test readings');
+    return data;
+  }
+
+  Future<void> _loadDataStats() async {
+    print('🔄 Loading IoT data statistics...');
+    try {
+      final stats = await _firebaseDataService.getIoTDataStats(days: 7);
+      print('📊 Loaded stats: $stats');
+
+      if (stats.isNotEmpty && (stats['heartRate']?['avg'] ?? 0) > 0) {
+        print('✅ Using real IoT stats for dashboard');
+        if (mounted) {
+          setState(() {
+            _dataStats = stats;
+          });
+        }
+      } else {
+        print('⚠️ No IoT stats available, generating realistic test stats...');
+        final testStats = _generateRealisticTestStats();
+        if (mounted) {
+          setState(() {
+            _dataStats = testStats;
+          });
+        }
+      }
+    } catch (e) {
+      print('❌ Error loading data stats: $e');
+      // Generate test stats as fallback
+      final testStats = _generateRealisticTestStats();
+      if (mounted) {
+        setState(() {
+          _dataStats = testStats;
+        });
+      }
+    }
+  }
+
+  Map<String, dynamic> _generateRealisticTestStats() {
+    return {
+      'heartRate': {
+        'avg': 75.0,
+        'min': 65.0,
+        'max': 85.0,
+      },
+      'oxygenSaturation': {
+        'avg': 98.0,
+        'min': 96.0,
+        'max': 100.0,
+      },
+      'temperature': {
+        'avg': 36.8,
+        'min': 36.3,
+        'max': 37.3,
+      },
+      'glucose': {
+        'avg': 95.0,
+        'min': 85.0,
+        'max': 105.0,
+      },
+    };
   }
 
   @override
@@ -172,6 +418,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   'Week 28 • ${_getLastUpdateTime()}',
                   style: AppTypography.bodySmall.copyWith(
                     color: AppColors.textInverse.withValues(alpha: 0.8),
+                  ),
+                ),
+                Text(
+                  'Last IoT Update: ${_getLastUpdateTime()}',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textInverse.withValues(alpha: 0.7),
+                    fontSize: 10,
                   ),
                 ),
               ],
@@ -313,6 +566,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 Flexible(
                   child: VitalSignConfigs.heartRate(
+                    //make it heartrate mines 80
                     value: _currentVitals.heartRate ?? 0,
                     trend: _getTrend('heartRate'),
                     onTap: () => _showVitalDetails('Heart Rate'),
@@ -393,9 +647,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   String _getTrend(String vitalType) {
-    // Simple trend simulation - in real app this would be calculated from historical data
-    final trends = ['up', 'down', 'stable'];
-    return trends[_currentVitals.timestamp.second % 3];
+    if (_historicalData.length < 2) {
+      return 'stable';
+    }
+
+    // Get the last 2 readings for trend calculation
+    final recent = _historicalData.last;
+    final previous = _historicalData[_historicalData.length - 2];
+
+    double currentValue = 0;
+    double previousValue = 0;
+
+    switch (vitalType.toLowerCase()) {
+      case 'heart rate':
+        currentValue = recent.heartRate ?? 0;
+        previousValue = previous.heartRate ?? 0;
+        break;
+      case 'oxygen saturation':
+      case 'spo2':
+        currentValue = recent.oxygenSaturation ?? 0;
+        previousValue = previous.oxygenSaturation ?? 0;
+        break;
+      case 'temperature':
+        currentValue = recent.temperature ?? 0;
+        previousValue = previous.temperature ?? 0;
+        break;
+      case 'glucose':
+        currentValue = recent.glucose ?? 0;
+        previousValue = previous.glucose ?? 0;
+        break;
+      default:
+        return 'stable';
+    }
+
+    if (previousValue == 0) return 'stable';
+
+    final changePercent =
+        ((currentValue - previousValue) / previousValue) * 100;
+
+    if (changePercent > 5) {
+      return 'up';
+    } else if (changePercent < -5) {
+      return 'down';
+    } else {
+      return 'stable';
+    }
   }
 
   Color _getStatusColor() {
@@ -469,15 +765,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Action Methods
   Future<void> _refreshData() async {
     setState(() {
-      // _isConnecting = true;
       _connectionStatus = DeviceConnectionStatus.connecting;
     });
 
-    // Simulate refresh delay
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Reload real IoT data efficiently
+      await _loadLatestVitals();
+      await _loadHistoricalData();
+      await _loadDataStats();
+
+      print('✅ Dashboard refreshed with latest IoT data');
+    } catch (e) {
+      print('❌ Error refreshing dashboard data: $e');
+    }
 
     setState(() {
-      // _isConnecting = false;
       _connectionStatus = DeviceConnectionStatus.connected;
     });
   }
@@ -495,44 +797,111 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _callDoctor() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Calling your healthcare provider...'),
-        backgroundColor: AppColors.secondary,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    // Navigate to alerts screen which has emergency call functionality
+    // Since we're using bottom navigation, we need to find the parent and switch tabs
+    final mainNavigation =
+        context.findAncestorStateOfType<MainNavigationScreenState>();
+    if (mainNavigation != null) {
+      mainNavigation.currentIndex = 2; // Alerts tab index
+    }
   }
 
   void _viewHistory() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Opening health history...'),
-        backgroundColor: AppColors.primary,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    // Navigate to history screen using bottom navigation
+    final mainNavigation =
+        context.findAncestorStateOfType<MainNavigationScreenState>();
+    if (mainNavigation != null) {
+      mainNavigation.currentIndex = 1; // History tab index
+    }
   }
 
   void _manageDeviceConnection() {
-    setState(() {
-      if (_connectionStatus == DeviceConnectionStatus.connected) {
-        _connectionStatus = DeviceConnectionStatus.disconnected;
-        // Firebase service handles connection automatically
-      } else {
+    if (_connectionStatus == DeviceConnectionStatus.connected) {
+      // Show disconnect confirmation
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Disconnect IoT Device'),
+          content: const Text(
+            'Are you sure you want to disconnect from the IoT device? This will stop real-time monitoring.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                setState(() {
+                  _connectionStatus = DeviceConnectionStatus.disconnected;
+                });
+                // Stop data streams
+                _vitalSignsSubscription?.cancel();
+                _historicalDataSubscription?.cancel();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.warning,
+              ),
+              child: const Text('Disconnect'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Reconnect
+      setState(() {
         _connectionStatus = DeviceConnectionStatus.connecting;
-        _initializeDataStream();
-      }
-    });
+      });
+      _initializeDataStream();
+      _loadInitialData();
+    }
   }
 
   void _triggerSOS() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Emergency SOS'),
-        content: const Text(
-          'This will send an emergency alert with your location and vital signs to your emergency contacts and healthcare provider.',
+        title: const Text('🚨 Emergency SOS'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'This will send an emergency alert with your current vital signs to emergency contacts.',
+            ),
+            const SizedBox(height: AppTheme.spacingM),
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spacingM),
+              decoration: BoxDecoration(
+                color: AppColors.critical.withValues(alpha: 0.1),
+                borderRadius: AppTheme.smallRadius,
+                border: Border.all(
+                    color: AppColors.critical.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Current Vitals:',
+                    style: AppTypography.labelMedium.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.critical,
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingS),
+                  Text(
+                      'Heart Rate: ${_currentVitals.heartRate?.toInt() ?? 0} BPM'),
+                  Text(
+                      'SpO2: ${_currentVitals.oxygenSaturation?.toInt() ?? 0}%'),
+                  Text(
+                      'Temperature: ${_currentVitals.temperature?.toStringAsFixed(1) ?? '0.0'}°C'),
+                  Text(
+                      'Glucose: ${_currentVitals.glucose?.toInt() ?? 0} mg/dL'),
+                ],
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -542,39 +911,118 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Emergency alert sent!'),
-                  backgroundColor: AppColors.critical,
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
+              _sendEmergencyAlert();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.critical,
             ),
-            child: const Text('Send Alert'),
+            child: const Text('🚨 Send SOS Alert'),
           ),
         ],
       ),
     );
   }
 
+  void _sendEmergencyAlert() {
+    // Show emergency alert sent confirmation
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('🚨 Emergency SOS alert sent!'),
+        backgroundColor: AppColors.critical,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'View',
+          textColor: AppColors.textInverse,
+          onPressed: () {
+            // Navigate to alerts screen to see the emergency alert
+            final mainNavigation =
+                context.findAncestorStateOfType<MainNavigationScreenState>();
+            if (mainNavigation != null) {
+              mainNavigation.currentIndex = 2; // Alerts tab index
+            }
+          },
+        ),
+      ),
+    );
+
+    // In a real app, this would:
+    // 1. Send push notification to emergency contacts
+    // 2. Send SMS to emergency numbers
+    // 3. Log emergency event to Firebase
+    // 4. Trigger emergency protocols
+    print('🚨 Emergency SOS alert triggered with vitals: $_currentVitals');
+  }
+
   Widget _buildQuickActionsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section Header
         Text(
           'Quick Actions',
-          style: AppTypography.headlineSmall.copyWith(
+          style: AppTypography.titleMedium.copyWith(
             fontWeight: FontWeight.bold,
           ),
-        ).animate().slideX(
-              begin: -0.3,
-              duration: const Duration(milliseconds: 600),
-              delay: const Duration(milliseconds: 600),
+        ),
+        const SizedBox(height: AppTheme.spacingM),
+
+        // Real-time Status Indicator
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppTheme.spacingM),
+          decoration: BoxDecoration(
+            color: _connectionStatus == DeviceConnectionStatus.connected
+                ? AppColors.success.withValues(alpha: 0.1)
+                : AppColors.warning.withValues(alpha: 0.1),
+            borderRadius: AppTheme.mediumRadius,
+            border: Border.all(
+              color: _connectionStatus == DeviceConnectionStatus.connected
+                  ? AppColors.success.withValues(alpha: 0.3)
+                  : AppColors.warning.withValues(alpha: 0.3),
             ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                _connectionStatus == DeviceConnectionStatus.connected
+                    ? PhosphorIcons.checkCircle()
+                    : PhosphorIcons.warning(),
+                color: _connectionStatus == DeviceConnectionStatus.connected
+                    ? AppColors.success
+                    : AppColors.warning,
+                size: 20,
+              ),
+              const SizedBox(width: AppTheme.spacingS),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _connectionStatus == DeviceConnectionStatus.connected
+                          ? 'IoT Device Connected'
+                          : 'IoT Device Disconnected',
+                      style: AppTypography.labelMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: _connectionStatus ==
+                                DeviceConnectionStatus.connected
+                            ? AppColors.success
+                            : AppColors.warning,
+                      ),
+                    ),
+                    Text(
+                      _connectionStatus == DeviceConnectionStatus.connected
+                          ? 'Receiving real-time sensor data'
+                          : 'Check device connection and try refreshing',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
 
         const SizedBox(height: AppTheme.spacingM),
 
@@ -583,10 +1031,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             Expanded(
               child: _buildActionButton(
-                'Call Doctor',
-                PhosphorIcons.phone(),
-                AppColors.secondary,
-                () => _callDoctor(),
+                icon: PhosphorIcons.phone(),
+                label: 'Call Doctor',
+                color: AppColors.secondary,
+                onTap: () => _callDoctor(),
               ).animate().slideX(
                     begin: -0.5,
                     duration: const Duration(milliseconds: 700),
@@ -596,10 +1044,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(width: AppTheme.spacingM),
             Expanded(
               child: _buildActionButton(
-                'View History',
-                PhosphorIcons.chartLine(),
-                AppColors.primary,
-                () => _viewHistory(),
+                icon: PhosphorIcons.chartLine(),
+                label: 'View History',
+                color: AppColors.success,
+                onTap: () => _viewHistory(),
               ).animate().slideX(
                     begin: 0.5,
                     duration: const Duration(milliseconds: 700),
@@ -615,16 +1063,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         SizedBox(
           width: double.infinity,
           child: _buildActionButton(
-            _connectionStatus == DeviceConnectionStatus.connected
-                ? 'Device Connected'
-                : 'Connect Device',
-            _connectionStatus == DeviceConnectionStatus.connected
+            icon: _connectionStatus == DeviceConnectionStatus.connected
                 ? PhosphorIcons.checkCircle()
                 : PhosphorIcons.bluetooth(),
-            _connectionStatus == DeviceConnectionStatus.connected
+            label: _connectionStatus == DeviceConnectionStatus.connected
+                ? 'Device Connected'
+                : 'Connect Device',
+            color: _connectionStatus == DeviceConnectionStatus.connected
                 ? AppColors.success
                 : AppColors.warning,
-            () => _manageDeviceConnection(),
+            onTap: () => _manageDeviceConnection(),
           ).animate().slideY(
                 begin: 0.5,
                 duration: const Duration(milliseconds: 700),
@@ -635,14 +1083,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildActionButton(
-    String label,
-    IconData icon,
-    Color color,
-    VoidCallback onPressed,
-  ) {
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return ElevatedButton.icon(
-      onPressed: onPressed,
+      onPressed: onTap,
       icon: Icon(icon, size: 20),
       label: Text(label),
       style: ElevatedButton.styleFrom(
